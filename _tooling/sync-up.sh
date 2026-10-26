@@ -41,11 +41,11 @@ if [ -n "$ADD" ]; then
   [ -d "$SRC/$ADD" ] || die "技能不存在: $SRC/$ADD"
   [ -f "$SRC/$ADD/SKILL.md" ] || die "$ADD 缺 SKILL.md，不是有效技能"
   grep -qxF "$ADD" "$LIST" 2>/dev/null || echo "$ADD" >> "$LIST"
-  ok "$ADD 已加入白名单（$LIST）"
+  ok "$ADD 已加入白名单（${LIST}）"
   [ -z "$MSG" ] && { say "→ 再跑一次带说明的同步"; exit 0; }
 fi
 
-[ -f "$LIST" ] || die "缺少白名单 $LIST（首行写技能名，一行一个）"
+[ -f "$LIST" ] || die "缺少白名单 ${LIST}（首行写技能名，一行一个）"
 
 # ---------- 复制 ----------
 say "▸ 从 $SRC 同步白名单技能 → $REPO"

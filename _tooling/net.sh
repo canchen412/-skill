@@ -68,9 +68,10 @@ wb_probe_route() {
 }
 
 # 便利封装：wb_git <git 子命令...>
+# 注意：WB_GIT 前缀末尾已含 `git -c http.version=...`，这里不能再拼 git
 wb_git() {
   wb_probe_route
-  "${WB_GIT[@]}" git "$@"
+  "${WB_GIT[@]}" "$@"
 }
 
 # 打印当前出口

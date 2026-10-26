@@ -6,16 +6,28 @@
 
 | 技能 | 文件数 | 体积 | 状态 |
 |---|---:|---:|---|
-| `koubo-ad-video` 带货口播成片 | 223 | 15.1 MB | ✅ 试点中 |
+| `koubo-ad-video` 带货口播成片 | 223 | 16.8 MB | ✅ 试点中 |
 
 ## 快速开始
 
-### 主号（改完技能后发布）
+### 主号（首次推送 / 日常发布）
 
 ```bash
 cd ~/wb-skills
-bash _tooling/push.sh "这次改了什么"
+
+# 首次推送（凭据从 ~/.wb-git-token 读，不进命令行）
+bash _tooling/push-now.sh
+
+# 日常：改了技能之后
+bash _tooling/sync-up.sh "这次改了什么"
+
+# 加新技能进白名单
+bash _tooling/sync-up.sh "加个新技能" --add 技能名
 ```
+
+> **网络**：本机 `http_proxy` 指向 WorkBuddy 沙箱代理，它**拒绝** CONNECT github.com。
+> `_tooling/net.sh` 会自动探测本机代理客户端（Clash 7897/7899、Surge 6152、V2Ray 1087 等），
+> 找到能通的就走它，全不通才直连。所有脚本已接入，不用手工设代理。
 
 ### 小号（首次）
 
@@ -67,9 +79,13 @@ cd ~/wb-skills && bash _tooling/pull.sh && echo "记得重启 WorkBuddy"
 | 脚本 | 作用 |
 |---|---|
 | `_tooling/precheck.py` | 体检（体积/大文件/嵌套仓库/凭据/跨机路径/SKILL.md）+ 生成 MANIFEST |
-| `_tooling/push.sh` | 主号发布：体检 → 提交 → 推送 → 打标签 |
+| `_tooling/net.sh` | **GitHub 出口自动探测**（被其他脚本 source，不用手设代理） |
+| `_tooling/push-now.sh` | 首次推送：读 token 文件 → 探远端 → 推送 → 校验 SHA → 打标签 |
+| `_tooling/sync-up.sh` | 主号日常发布：白名单同步 → 体检 → 提交 → 推送 → 打标签 |
+| `_tooling/push.sh` | 同上但针对 `~/.workbuddy/skills` 本身是 git 仓库的场景 |
 | `_tooling/pull.sh` | 小号同步：判脏 → 备份 → 覆盖；支持 `--dry-run` / `--rollback` |
 | `_tooling/link-assets.sh` | 双机路径对齐（素材盘软链 + 用户名别名） |
 | `_tooling/setup-mac.sh` | 环境自检与安装 |
+| `skills.list` | 白名单：只同步这里列出的技能，一行一个 |
 
 详细方案见工作区 `skills-git-sync/方案.md`。
