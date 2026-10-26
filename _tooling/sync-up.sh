@@ -139,12 +139,14 @@ ok "已提交 $(git rev-parse --short HEAD): $MSG"
 say ""
 say "▸ 推送"
 # 本机沙箱代理会拦 github（CONNECT 502），必须清代理直连
-PUSH_ENV=(env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u all_proxy)
-if "${PUSH_ENV[@]}" git -c http.version=HTTP/1.1 push -q origin main 2>/tmp/wb_push_err; then
+source "$HERE/net.sh"
+wb_probe_route
+say "  GitHub 出口: $WB_ROUTE"
+if wb_git push -q origin main 2>/tmp/wb_push_err; then
   ok "已推送到 GitHub"
   AUTO="v$(date +%Y.%m.%d)-$(git rev-list --count HEAD)"
   git tag -f "$AUTO" >/dev/null 2>&1 && \
-    "${PUSH_ENV[@]}" git -c http.version=HTTP/1.1 push -f -q origin "$AUTO" 2>/dev/null && \
+    wb_git push -f -q origin "$AUTO" 2>/dev/null && \
     ok "已打标签 $AUTO"
 else
   warn "推送失败（本地提交已完成，不影响）"

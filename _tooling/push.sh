@@ -113,11 +113,11 @@ SHORT=$(git rev-parse --short HEAD)
 ok "已提交 $SHORT: $MSG"
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-# ★ 实测坑（2026-10-26）：本机有 http_proxy=127.0.0.1:60401（WorkBuddy 沙箱代理），
-#   它拒绝 CONNECT 到 github.com，报 "HTTP2 framing layer" / "CONNECT tunnel failed 502"。
-#   必须清掉代理变量直连，否则永远推不上去。
-PUSH_ENV=(env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u all_proxy)
-if "${PUSH_ENV[@]}" git -c http.version=HTTP/1.1 push -q origin "$BRANCH" 2>/tmp/wb_push_err; then
+# GitHub 出口自动探测（沙箱代理拒连 github，需从本机代理客户端出去或直连）
+source "$HERE/net.sh"
+wb_probe_route
+say "  GitHub 出口: $WB_ROUTE"
+if wb_git push -q origin "$BRANCH" 2>/tmp/wb_push_err; then
   ok "已推送到 origin/$BRANCH"
 else
   warn "推送失败，错误如下："
@@ -134,10 +134,10 @@ fi
 say ""
 say "▸ 第 5 步：版本标签"
 if [ -n "$TAG" ]; then
-  git tag -f "$TAG" && "${PUSH_ENV[@]}" git -c http.version=HTTP/1.1 push -f -q origin "$TAG" && ok "已打标签 $TAG"
+  git tag -f "$TAG" && wb_git push -f -q origin "$TAG" && ok "已打标签 $TAG"
 else
   AUTO="v$(date +%Y.%m.%d)-$(git rev-list --count HEAD)"
-  if git tag -f "$AUTO" >/dev/null 2>&1 && "${PUSH_ENV[@]}" git -c http.version=HTTP/1.1 push -f -q origin "$AUTO" 2>/dev/null; then
+  if git tag -f "$AUTO" >/dev/null 2>&1 && wb_git push -f -q origin "$AUTO" 2>/dev/null; then
     ok "已自动打标签 ${AUTO}（小号可用 --rollback $AUTO 回退）"
   else
     warn "打标签失败（不影响同步）"

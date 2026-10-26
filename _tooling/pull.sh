@@ -77,8 +77,11 @@ fi
 # ---------------- 拉取 ----------------
 if [ "$MODE" = "sync" ] && [ "$DRY" = "0" ]; then
   say "▸ 第 1 步：拉取远端"
+  source "$HERE/net.sh"
+  wb_probe_route
+  say "  GitHub 出口: $WB_ROUTE"
   BEFORE=$(git rev-parse --short HEAD)
-  if git pull --ff-only -q 2>/tmp/wb_pull_err; then
+  if wb_git pull --ff-only -q 2>/tmp/wb_pull_err; then
     AFTER=$(git rev-parse --short HEAD)
     if [ "$BEFORE" = "$AFTER" ]; then
       ok "已是最新（${AFTER}）"

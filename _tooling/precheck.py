@@ -240,7 +240,7 @@ def main():
 
     # 嵌套 git
     section("[4] 嵌套 git 仓库")
-    nested = [g for g in root.glob("**/.git") if g.is_dir()]
+    nested = [g for g in root.glob("**/.git") if g.is_dir() and g.parent != root]
     if nested:
         for g in nested:
             rel = g.parent.relative_to(root)
@@ -249,12 +249,16 @@ def main():
     else:
         ok("无嵌套仓库")
 
+    def _skip_docfile(rel):
+        r = str(rel)
+        return r.startswith("_") or r.startswith(".") or ("/" not in r and r.lower().endswith((".md", ".json", ".txt")))
+
     # 凭据
     section("[5] 凭据扫描")
     textsuf = {".md", ".py", ".sh", ".json", ".yaml", ".yml", ".js", ".ts", ".txt", ".cfg", ".ini", ".env"}
     leaked = 0
     for p, rel in files:
-        if p.suffix.lower() not in textsuf:
+        if p.suffix.lower() not in textsuf or _skip_docfile(rel):
             continue
         try:
             if p.stat().st_size > 2 * 1024 * 1024:
@@ -290,7 +294,7 @@ def main():
         return v
 
     for p, rel in files:
-        if p.suffix.lower() not in textsuf2:
+        if p.suffix.lower() not in textsuf2 or _skip_docfile(rel):
             continue
         try:
             if p.stat().st_size > 2 * 1024 * 1024:
