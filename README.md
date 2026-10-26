@@ -26,6 +26,11 @@ bash _tooling/sync-up.sh "加个新技能" --add 技能名
 ```
 
 > **网络**：本机 `http_proxy` 指向 WorkBuddy 沙箱代理，它**拒绝** CONNECT github.com。
+> 若探测抖动，可钉死端口（不靠猜）：
+> ```bash
+> echo 'WB_PROXY=http://127.0.0.1:7897' > ~/.wb-net.conf
+> ```
+> 该文件是**本机配置，不入库**。删除它即恢复自动探测。
 > `_tooling/net.sh` 会自动探测本机代理客户端（Clash 7897/7899、Surge 6152、V2Ray 1087 等），
 > 找到能通的就走它，全不通才直连。所有脚本已接入，不用手工设代理。
 

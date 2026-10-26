@@ -17,6 +17,12 @@ REPO="${WB_REPO:-$HOME/wb-skills}"
 TOKEN_FILE="${WB_TOKEN_FILE:-$HOME/.wb-git-token}"
 GIT_USER="${WB_GIT_USER:-canchen412}"
 BRANCH="${WB_BRANCH:-main}"
+FORCE=0
+for a in "$@"; do
+  case "$a" in
+    --force|-f) FORCE=1 ;;
+  esac
+done
 
 say()  { printf '%s\n' "$*"; }
 ok()   { printf '✅ %s\n' "$*"; }
@@ -93,15 +99,19 @@ fi
 # ---------------- 推送 ----------------
 say ""
 say "▸ 第 2 步：推送 $BRANCH"
-if wb_git push -u origin "$BRANCH" 2>/tmp/wb_push_out; then
+PUSH_FLAGS=()
+[ "$FORCE" = "1" ] && { PUSH_FLAGS=(-f); say "  （--force：覆盖远端已有历史）"; }
+if wb_git push "${PUSH_FLAGS[@]}" -u origin "$BRANCH" 2>/tmp/wb_push_out; then
   ok "推送成功"
   sed 's/^/     /' /tmp/wb_push_out | tail -8
 else
   warn "推送失败："
   sed 's/^/     /' /tmp/wb_push_out | tail -12
   say ""
-  say "若提示 non-fast-forward：远端已有内容，先执行"
-  say "   cd $REPO && git pull --rebase origin $BRANCH"
+  say "若提示 non-fast-forward / fetch first："
+  say "  · 远端有别人的提交 → 先 cd $REPO && git pull --rebase origin $BRANCH"
+  say "  · 远端只有建仓库时自动生成的 README（无价值）→ 用 --force 覆盖"
+  say "    bash _tooling/push-now.sh --force"
   exit 1
 fi
 

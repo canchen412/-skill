@@ -30,6 +30,13 @@ WB_GIT=()
 wb_probe_route() {
   [ -n "$WB_ROUTE" ] && return 0
 
+  # 用户配置文件优先（钉死端口，避免每次探测的抖动）
+  #   ~/.wb-net.conf 内容示例：WB_PROXY=http://127.0.0.1:7897
+  if [ -f "$HOME/.wb-net.conf" ]; then
+    # shellcheck disable=SC1091
+    . "$HOME/.wb-net.conf" 2>/dev/null || true
+  fi
+
   # 允许用户强制指定：WB_PROXY=http://127.0.0.1:7897 或 WB_PROXY=none
   case "${WB_PROXY:-}" in
     none|direct)
@@ -44,20 +51,24 @@ wb_probe_route() {
       return 0 ;;
   esac
 
-  local port
+  local port try
   for port in $WB_PROXY_TRIES; do
     # 端口没监听就跳过，省时间
-    if ! nc -z -G 1 127.0.0.1 "$port" >/dev/null 2>&1; then
+    if ! nc -z -G 2 127.0.0.1 "$port" >/dev/null 2>&1; then
       continue
     fi
-    if curl -sS -o /dev/null --max-time 4 -x "http://127.0.0.1:$port" \
-         https://github.com >/dev/null 2>&1; then
-      WB_GIT=(env http_proxy="http://127.0.0.1:$port" https_proxy="http://127.0.0.1:$port" \
-                  HTTP_PROXY="http://127.0.0.1:$port" HTTPS_PROXY="http://127.0.0.1:$port" \
-                  git -c http.version=HTTP/1.1)
-      WB_ROUTE="proxy:$port"
-      return 0
-    fi
+    # 首次连接要建隧道+解析 DNS，可能偏慢；给 8s 并重试一次
+    for try in 1 2; do
+      if curl -sS -o /dev/null --max-time 8 -x "http://127.0.0.1:$port" \
+           https://github.com >/dev/null 2>&1; then
+        WB_GIT=(env http_proxy="http://127.0.0.1:$port" https_proxy="http://127.0.0.1:$port" \
+                    HTTP_PROXY="http://127.0.0.1:$port" HTTPS_PROXY="http://127.0.0.1:$port" \
+                    git -c http.version=HTTP/1.1)
+        WB_ROUTE="proxy:$port"
+        return 0
+      fi
+      sleep 0.3
+    done
   done
 
   # 都没通就试直连（某些网络直连本来就通）
