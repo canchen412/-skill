@@ -46,7 +46,8 @@ RSYNC_EXCLUDES=(
   --exclude='node_modules' --exclude='.runtime' --exclude='.cache'
   --exclude='__pycache__' --exclude='*.pyc'
   --exclude='*.wav' --exclude='*.mp4' --exclude='*.mov'
-  --exclude='*.ttc' --exclude='*.ttf'
+  --exclude='*.ttc'
+  # 注意：不要排除 *.ttf —— 仓库里保留了「新青年体.ttf」等字幕渲染必需字体
   --exclude='.DS_Store' --exclude='._*'
 )
 

@@ -101,7 +101,7 @@ say ""
 say "▸ 第 2 步：推送 $BRANCH"
 PUSH_FLAGS=()
 [ "$FORCE" = "1" ] && { PUSH_FLAGS=(-f); say "  （--force：覆盖远端已有历史）"; }
-if wb_git push "${PUSH_FLAGS[@]}" -u origin "$BRANCH" 2>/tmp/wb_push_out; then
+if wb_git push ${PUSH_FLAGS[@]+"${PUSH_FLAGS[@]}"} -u origin "$BRANCH" 2>/tmp/wb_push_out; then
   ok "推送成功"
   sed 's/^/     /' /tmp/wb_push_out | tail -8
 else
