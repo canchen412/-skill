@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小男孩 IP · 生图提示词表 v1.0</title>
+<style>
+:root{
+  --bg:#0f1115; --card:#171a21; --card2:#1e222b; --line:#2b303b;
+  --fg:#e8eaef; --dim:#9aa3b2; --accent:#ffd45e; --accent2:#6ec8ff;
+  --warn:#ff9a8b; --ok:#7ee0a8; --mono:"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:28px 20px 60px}
+.wrap{max-width:1760px;margin:0 auto}
+h1{font-size:27px;letter-spacing:.5px;margin-bottom:6px}
+.sub{color:var(--dim);font-size:13.5px;margin-bottom:20px}
+h2{font-size:19px;margin:34px 0 12px;padding-left:11px;border-left:4px solid var(--accent)}
+h3{font-size:15px;margin:22px 0 8px;color:var(--accent2)}
+code,.mono{font-family:var(--mono);font-size:12.5px;line-height:1.65}
+pre{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:13px 15px;overflow-x:auto;color:#cfe3ff;white-space:pre-wrap;word-break:break-word}
+.tbl{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;margin-bottom:8px}
+th{background:var(--card2);color:var(--accent);font-size:13px;font-weight:600;padding:10px;text-align:left;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13.5px}
+tr:hover td{background:#1b1f28}
+.id{font-family:var(--mono);color:var(--accent);font-weight:600;white-space:nowrap}
+.scene{color:var(--accent2);font-size:12.5px;min-width:104px}
+.body{font-family:var(--mono);font-size:12px;color:#d6e2f2;line-height:1.7;min-width:400px}
+.shot{color:var(--ok);font-size:12.5px;min-width:180px}
+.note{color:var(--warn);font-size:12.5px;min-width:190px}
+.btn{background:#243040;color:var(--accent2);border:1px solid #3a4a66;border-radius:5px;padding:3px 10px;font-size:11.5px;cursor:pointer;font-family:inherit;margin-top:5px}
+.btn:hover{background:#2e3d52;color:#fff}
+.btn.ok{background:#1e4030;color:var(--ok);border-color:#2f6a4a}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:16px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-size:13px;margin-top:8px}
+.kv b{color:var(--dim);font-weight:500}
+.warnbox{background:#2a1d1a;border:1px solid #6a3a30;border-radius:8px;padding:12px 15px;color:#ffd0c6;font-size:13px;margin:14px 0}
+.okbox{background:#16261e;border:1px solid #2f6a4a;border-radius:8px;padding:12px 15px;color:#c4f0d8;font-size:13px;margin:14px 0}
+.toc a{display:inline-block;margin:3px 12px 3px 0;color:var(--accent2);text-decoration:none;font-size:13px}
+.toc a:hover{text-decoration:underline}
+.chips{font-size:12.5px;color:var(--dim);margin-top:4px}
+.chips b{color:var(--fg);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>小男孩 IP · 生图提示词表 v1.0</h1>
+<div class="sub">建档 2026-10-03 ｜ 覆盖高频品类：<b>烟酰胺 / 姜黄素 / 液体钙 / 蛋白质</b> ｜ 用法：<b>强制前缀（4 段）+ 创意正文</b> 直接拼接 ｜ 配套表：<code>小绿人IP_生图提示词表.html</code></div>
+
+<div class="toc">
+  <a href="#diff">① 两个IP的区别</a><a href="#pre">② 强制前缀</a><a href="#fix">③ 固定参数</a><a href="#sk">A. 皮肤焦虑镜</a><a href="#ht">B. 身高对比镜</a><a href="#pr">C. 蛋白饮食镜</a><a href="#mt">D. 代谢排毒镜</a><a href="#mv">E. 主视觉封面</a><a href="#pd">F. 产品与联名</a><a href="#ac">G. 训练动作镜</a><a href="#sm">H. 社媒收尾</a><a href="#neg">④ 通用负面词</a><a href="#chk">⑤ 自检 + i2v优先级</a>
+</div>
+
+<div class="warnbox">
+<b>三条铁律</b>：① 本 IP <b>有脸</b>——<b>可以写表情</b>（frown / grit teeth / smug / wide eyes），但 <b>服装永远不变</b>：白罗纹背心 + 黑束脚裤 + 赤脚；② 眼睛是<b>正常动漫眼（有白眼球高光）</b>，不要写成小绿人那种纯黑椭圆；③ <b>不要用小绿人前缀</b>，两个 IP 的 P2 完全不同，混用会画错人。
+</div>
+
+<div class="okbox">
+<b>选前缀速查</b>：需要<b>颜值 / 表情 / 状态 / 同龄人对比 / 吃</b> → 用本表（小男孩）；需要<b>力量 / 指导 / 科普 / 产品讲解</b> → 用 <code>小绿人IP_生图提示词表</code>。
+</div>
+
+<h2 id="diff">① 两个 IP 的区别（别用错前缀）</h2>
+<div class="panel">
+<table class="tbl">
+<tr><th>项</th><th>小男孩 IP（本表）</th><th>小绿人 IP</th></tr>
+<tr><td class="scene">面部</td><td class="ck" style="color:var(--fg)"><b>有脸</b>：黑短发、正常五官、能做表情</td><td class="note">无脸：全罩面罩</td></tr>
+<tr><td class="scene">服装</td><td><b>白色罗纹背心 + 黑色束脚长裤 + 赤脚</b></td><td class="note">黑色短裤 + 白色腕带</td></tr>
+<tr><td class="scene">眼睛</td><td>正常动漫眼（有白眼球高光）</td><td class="note">纯黑椭圆</td></tr>
+<tr><td class="scene">情绪</td><td class="ck">可写 frown / grit / smug / shock</td><td class="note">禁表情词，只靠身体语言</td></tr>
+<tr><td class="scene">适用</td><td>颜值、表情、状态、同龄人对比、吃</td><td class="note">力量、指导、科普、产品</td></tr>
+</table>
+</div>
+
+<h2 id="pre">② 强制前缀（每次必带，四段）</h2>
+<div class="panel">
+<h3>P1 · 画风与画幅</h3>
+<pre id="p1">2D Japanese anime thick-paint rendering, soft airbrushed gradients building the form,
+light-to-shadow transitions are SOFT edges, NOT hard lines.
+16:9 (1536x864), full-bleed artwork, no letterbox bars.</pre>
+<h3>P2 · IP 固定块（逐字复用，只换 POSE）</h3>
+<pre id="p2">CHARACTER: a lean athletic anime boy, late-teen, short spiky black hair, warm tan skin,
+defined jawline and expressive dark anime eyes WITH natural white sclera and catchlights,
+slim athletic build NOT bulky, NOT Q-version, NOT skinny.
+WARDROBE (must stay identical every time): a plain white ribbed tank top with a
+round scoop neck, black drawstring jogger pants with white side stripes, bare feet.
+Body build, face and hairstyle EXACTLY the same as reference image 1 — do NOT change
+the outfit color, do NOT add sleeves, do NOT add shoes.
+RENDERING LOCK: soft airbrushed 2D anime thick-paint EVEN UNDER DRAMATIC LIGHTING;
+NO hard specular bars, NO hatching, NO thick black outlines, NO flat cel-shaded color
+blocks, NO American superhero comic style, NO plastic CG/3D-render look, NO waxy skin.</pre>
+<h3>P3 · 构图与视频就绪</h3>
+<pre id="p3">COMPOSITION: subject at a golden-ratio intersection (never dead center), strong
+diagonal energy flow, three depth planes (blurred foreground / sharp subject /
+atmospheric background), generous clean negative space at the bottom quarter for captions.
+FULL-BODY RULE (when the whole body is in frame): the figure is OFF-CENTER, occupies
+the upper two-thirds, and his feet END WELL ABOVE the bottom edge — the bottom quarter
+stays empty dark floor. Never let the feet touch the bottom frame edge.
+MOTION-READY: at least one element that can move.
+MIRROR-SAFE: any reflective surface must show a CONSISTENT, non-mirrored reflection.
+DARK FLOOR LOCK (whenever a floor or mirror is in frame): DARK MATTE floor, no white
+reflective floor, no glowing white ground plane — the bottom quarter must stay clean
+and readable for captions.</pre>
+<h3>N · 负向词</h3>
+<pre id="p4">NEGATIVE: NO text, NO watermark, NO logo, NO brand packaging on the outfit,
+NO extra limbs, NO six fingers, NO distorted hands, NO cluttered props,
+NO busy background, NO flat empty backdrop, NO chibi, NO photorealistic 3D.</pre>
+</div>
+
+<h2 id="fix">③ 统一固定参数表</h2>
+<div class="panel">
+<div class="kv">
+<b>画幅</b><span>16:9，1536×864（或 1920×1080），全出血无黑边</span>
+<b>画风</b><span>2D 日系动漫厚涂（赛璐璐分色 + 柔和厚涂过渡 + 干净细线稿）</span>
+<b>年龄感</b><span>少年（16–18），不幼态、不成熟</span>
+<b>服装</b><span>白色罗纹圆领背心 + 黑色束脚 Jogger（白侧条）+ 赤脚（<b>永不变</b>）</span>
+<b>眼睛</b><span>正常动漫眼（可写 sclera / catchlight），禁纯黑无瞳</span>
+<b>表情</b><span class="ck">可写（这是与绿人最大差别）：frown / grit teeth / smug / wide eyes</span>
+<b>字幕留白</b><span>底部 1/4 净空，不得堆内容</span>
+<b>标志光效</b><span>冷暖强对比 / 体积光束 / 逆光轮廓 / 放射爆光 / 镜面碎裂（每条至少一种）</span>
+<b>反射铁律</b><span>镜中倒影必须与本体一致且不镜像文字（#45：含文字符号的图禁 flip）</span>
+</div>
+</div>
+
+<h2 id="sk">A · 皮肤焦虑镜（烟酰胺：肤色暗沉 / 痘印 / 皮肤差）</h2>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-sk"></tbody></table>
+
+<h2 id="ht">B · 身高对比镜（液体钙：身高 / 骨密度 / 同龄人）</h2>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-ht"></tbody></table>
+
+<h2 id="pr">C · 蛋白饮食镜（蛋白质 / 蛋白粉）</h2>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-pr"></tbody></table>
+
+<h2 id="mt">D · 代谢排毒镜（姜黄素：熬夜 / 应酬 / 重金属 / 油光）</h2>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-mt"></tbody></table>
+
+<h2 id="mv">E · 主视觉 / 封面</h2>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-mv"></tbody></table>
+
+<h2 id="pd">F · 产品与联名</h2>
+<div class="warnbox" style="margin:10px 0 14px"><b>铁律（SKILL #167）</b>：产品图<b>永远不做整屏分镜</b>，只进侧边详情卡。本类提供的是「<b>角色拿着产品</b>」的场景画面，<b>瓶身必须留白无字</b>，后期再贴真卡。</div>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-pd"></tbody></table>
+
+<h2 id="ac">G · 训练动作镜（通用力量）</h2>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-ac"></tbody></table>
+
+<h2 id="sm">H · 社媒配图 / 收尾</h2>
+<table class="tbl"><thead><tr><th>编号</th><th>使用场景</th><th>提示词正文</th><th>镜头 / 运动建议</th><th>注意事项</th></tr></thead><tbody id="tb-sm"></tbody></table>
+
+<h2 id="neg">④ 通用负面词（可追加到任何工具）</h2>
+<div class="panel">
+<pre id="p5">chibi, Q-version, photorealistic 3D render, plastic skin, waxy skin, American superhero
+comic style, hard specular bars, hatching, thick black outlines, flat cel-shaded blocks,
+extra limbs, six fingers, deformed hands, text, letters, watermark, logo, brand packaging,
+mirrored text, cluttered props, busy background, gore, alcohol bottles, cigarettes</pre>
+</div>
+
+<h2 id="chk">⑤ 生成后自检 + i2v 优先级</h2>
+<div class="panel">
+<h3>每条必查 5 项</h3>
+<table class="tbl">
+<tr><th>检查项</th><th>判定标准</th></tr>
+<tr><td class="scene">服装</td><td>白背心 + 黑束脚裤 + 赤脚，三件齐全、颜色没变、没加鞋</td></tr>
+<tr><td class="scene">画风</td><td>2D 厚涂；<b>无白色硬高光条</b>、无粗黑描边、无 3D 塑料感</td></tr>
+<tr><td class="scene">脸</td><td>五官正常、有动漫眼高光；<b>没被产品 / 手臂挡住</b></td></tr>
+<tr><td class="scene">反射</td><td>镜中倒影姿态与本体一致，无镜像错位、无反写文字</td></tr>
+<tr><td class="scene">底部留白</td><td>底部 1/4 必须是<b>深色干净区</b>；若出现白亮地板/白色反光带，追加 DARK MATTE FLOOR 重 roll（实测 SK-06 首次就踩了）</td></tr>
+<tr><td class="scene">视频就绪</td><td>有可动之物（碎屑/热气/粉末/水花/光束/浊气/汗水）；底部 1/4 干净</td></tr>
+</table>
+<h3>i2v 最值得烧积分的 8 条</h3>
+<table class="tbl">
+<tr><th>编号</th><th>为什么值得</th></tr>
+<tr><td class="id">SK-06</td><td>镜面碎裂向外飞散 = 一次性大幅事件，视觉冲击最强</td></tr>
+<tr><td class="id">PR-02</td><td>蛋白粉倾泻 + 粉尘爆开，微距质感极好</td></tr>
+<tr><td class="id">AC-01</td><td>引体上拉爆发，动作幅度大、肌肉线条最出彩</td></tr>
+<tr><td class="id">AC-02</td><td>雨水 + 水花迸溅，环境动感天然强</td></tr>
+<tr><td class="id">AC-03</td><td>推举爆发 + 汗滴悬浮，暗场高对比</td></tr>
+<tr><td class="id">MT-03</td><td>体内浊气翻滚，半透明内部元素 i2v 会动得很自然</td></tr>
+<tr><td class="id">MT-04</td><td>悬浮金属碎片自转 + 尘落，产品感强</td></tr>
+<tr><td class="id">PR-04</td><td>食物塔摇晃 + 汗滴飞离，荒诞喜感</td></tr>
+</table>
+<div class="chips">判据不变：<b>有"一次性的大幅事件"才值得 35 积分</b>；只有"缓缓飘"（尘埃 / 光点 / 雾）就走 0 积分动效更好看。</div>
+</div>
+
+<h2>⑥ 实测补充（2026-10-03 拿 SK-06 真实跑图验证）</h2>
+<div class="panel">
+<p class="chips">样例图 <code>展示_男孩变帅瞬间镜面碎裂_中景_16x9.png</code> 已入库图库 —— 服装/脸/碎裂多倒影/金色背光全部正确，可直接作 i2v 源。</p>
+<table class="tbl">
+<tr><th>#</th><th>实测坑</th><th>现象</th><th>修法（已写进 P3）</th></tr>
+<tr><td class="id">1</td><td>镜前地板变白亮块</td><td>第一版底部出现一条<b>白色高反射亮带</b>，把字幕区吞掉</td><td>P3 加 <code>DARK FLOOR LOCK</code>：<code>DARK MATTE floor, no white reflective floor, no glowing white ground plane</code> + 单独一行 FLOOR 段落，<b>实测第二次就压住了</b></td></tr>
+<tr><td class="id">2</td><td>主体变死居中、脚踩底边</td><td>追加约束后模型把人物摆正到正中、双脚顶到下沿，底部留白被吃掉</td><td>把 <code>golden-ratio intersection</code> 升级为 <code>FULL-BODY RULE</code> —— 人物必须"悬"在画面上，脚不落地</td></tr>
+<tr><td class="id">3</td><td>碎裂镜倒影过多</td><td>模型把碎片全填满他的脸（7–9 张），画面变"万脸墙"、冲击力被稀释</td><td>限定 <code>inside no more than THREE separate mirror shards the reflection is visible</code> —— 碎片留空，纯黑反光面更有质感</td></tr>
+</table>
+<div class="warnbox"><b>用法提醒</b>：这三条都属"追加式约束"，<b>只在踩坑后加</b>，一次全加容易让模型过度约束、动作僵硬。建议流程：先跑基础版 → 目视 → 哪条不对加哪条。</div>
+</div>
+
+</div>
+<script>
+const DATA = {
+"sk":[
+["SK-01","对镜挤痘（核心镜）","a bathroom mirror scene at night: the boy stands before a large speckled mirror, left shoulder toward camera, his right index finger pressed against a cheek spot, eyes squeezed shut in a pained grimace, faint red blemishes and dull uneven skin across his cheeks. Inside the MIRROR the same face is rendered in sickly desaturated green-grey, the blemishes enlarged into dark cracked pits with crumbling edges, tiny black flakes of dead skin breaking off and falling inside the reflection only. Volumetric cold light from a single bulb above, warm rim light on his real shoulders, strong warm/cool split.","景别：中景过肩。运动：镜头极慢推近镜面；镜内黑色碎屑持续坠落，镜外静止。","★ 镜内超现实、镜外写实——反差就是冲击力。镜面禁任何文字。"],
+["SK-02","脸色很差（灰败）","a tight medium shot of the boy in front of a bathroom mirror, shoulders slumped, chin down, eyes half-lidded and lifeless. A visible dull grey-green cast covers his real skin, dark circles under his eyes, while his reflection in the mirror is a healthier warm-tan version lit by a soft golden glow. His hand hangs limp at his side. Cold fluorescent bathroom ambience, hard top light, a single warm shaft of light falling only on the reflection.","景别：近景。运动：缓慢下摇（crane down）；镜内暖光缓慢脉动。","镜内比镜外好看＝镜子里那个人是假的，不必点破。"],
+["SK-03","对自己不满意（咬牙）","a bedroom mirror at dusk: the boy stands square to camera in front of a tall mirror, hands gripping his own shoulders, jaw clenched, brows pulled together in a frustrated scowl, his reflection staring back with the exact same frustrated scowl but slightly blurred. A chair and a scattered gym towel lie forgotten on the floor. Deep amber window light raking across him from behind, long shadow cast toward camera.","景别：中景正面。运动：镜头缓慢环绕（arc left 20 度）；窗帘被穿堂风持续吹动。","镜面反射姿态必须与本体完全一致，不可镜像错位。"],
+["SK-04","痘印密布（震撼近景）","an extreme dramatic composition: the boy's face fills the left two-thirds in three-quarter view, numerous dark acne marks and pitted scars across both cheeks and forehead, one hand hovering at his jawline about to touch. Behind him on the right, a bathroom wall mirror reflects a dim second angle of the same marked face. A single hard cold key light rakes across his cheekbones so every scar casts its own tiny shadow. Deep black background, heavy vignette.","景别：近景偏特写。运动：镜头缓慢横移（lateral slide）；镜中倒影随之错位滑动。","皮肤瑕疵要画得狠，这是品类痛点入口；禁血腥。"],
+["SK-05","照镜被自己吓到","a night mirror scene: he has just leaned in close to the mirror and recoils, one hand flying up to his own cheek in shock, eyes wide with reflected white catchlights, mouth slightly open. His reflection is the only thing in focus, showing the same shocked pose a beat behind him. Cold blue moonlight through a window behind camera, a single warm bulb lighting the mirror edge, heavy atmosphere, dust in the air.","景别：中景。运动：镜头快速后拉（snap pull-back）后停住；灰尘持续飘动。","后拉要快，制造惊吓节奏；仍属动效而非 i2v（0 积分）。"],
+["SK-06","变帅瞬间（对比反转）","a hero shot: the boy stands tall before a floor mirror, arms relaxed, a confident half-smile, warm clean glowing skin, strong jawline lit by a golden rim light. The mirror surface is not intact — it is a wall of sharp cracks radiating outward from his reflection, and inside no more than THREE separate mirror shards the reflection is a DIFFERENT improved version of him (clearer skin, sharper jaw, brighter eyes), the remaining shards stay dark empty reflective glass. Radiating backlight bursts through the cracks, flying glass fragments frozen mid-air. Dark room, high contrast, sparks and dust.","景别：中景仰拍。运动：镜头缓慢推近；玻璃碎片持续向外飞散（一次性大幅事件 ⇒ 值得转 i2v）。","★ 本类最有冲击力的一条，碎片即变帅的心跳。碎片不得遮住脸。⚠️ 实测坑：镜前地板会被画成白色高反射亮块、把底部字幕区吞掉——凡地板/镜面镜追加 DARK MATTE FLOOR。"]],
+"ht":[
+["HT-01","同龄人排队（最矮）","a schoolyard lineup of four teenage boys of the SAME age standing shoulder to shoulder against a warm afternoon sky — the boy we follow is clearly the SHORTEST, his head reaching only to the shoulder of the boy beside him, chin tilted up, fists clenched at his sides, a faint frustrated jaw. A painted height scale on the brick wall behind them shows a horizontal line just above his head. Long golden-hour shadows stretch toward camera, lens-flare haze.","景别：全身群像横构图。运动：镜头缓慢横移（lateral truck）扫过队伍；衣角与发梢被风持续吹动。","群像里只有他偏矮，其他人体型要接近，避免四个人都矮。"],
+["HT-02","书本垫高（反差幽默）","a bedroom scene: the boy stands on a tall precarious stack of hardcover books on a stool to reach a wall-mounted height mark, arms out for balance, one leg lifted, wobbling. A shorter boy beside him watches and laughs, hand over mouth. A ladder leans unused against the wall. Warm lamp light from below, dust motes, deep shadows, comedic vertical composition.","景别：全身中景。运动：书堆轻微持续晃动；镜头缓慢上摇。","幽默向＝评论区友好；书本给 5–7 本，不要浮空。"],
+["HT-03","骨密度 X 光（钙）","a cinematic hybrid render: the boy stands in a dark X-ray chamber, his body rendered as a glowing translucent blue-white skeleton over a faint ghost of his solid form, every bone sharply defined and luminous. Inside the long bones, dense golden light flows like liquid, brightest at the growth-plate ends of the arms and legs, tiny sparks rising from the joints. His real face looks down at his own glowing arm in awe, mouth open. Hard rim light, deep black background, floating dust.","景别：中景半身。运动：镜头缓慢环绕；金色光流持续向骨端涌动。","★ 骨端金光＝钙的视觉符号，全片可复用。X 光感要软，禁恐怖骷髅。"],
+["HT-04","身高线前踮脚","a low-angle shot: the boy stands on tiptoes with both arms fully extended straight up, fingers reaching toward a hand-drawn height line on a wall, shoulders lifted, neck stretched, jaw open in a strained reach. The wall is bare and slightly worn; a floor lamp stands behind casting a long dramatic shadow of his whole body onto the wall, the shadow fingertips also straining upward. Warm low side light, strong chiaroscuro, dust in the beam.","景别：仰拍全身。运动：缓慢升镜（crane up）跟随指尖；灯下尘埃持续飘落。","影子是第二主体，构图中要看得见，别让影被裁。"],
+["HT-05","被遗忘在座位后（童年阴影）","a school classroom in warm afternoon light: rows of desks seen from the front, and behind the last row of taller classmates sits the boy alone, his head barely clearing the seat back in front, shoulders hunched, one hand gripping the edge of the desk. Dust floats in the sunbeams slanting through the windows; the foreground desks are out of focus. Nostalgic, slightly melancholic, strong depth layering.","景别：纵深中远景。运动：镜头缓慢后拉（pull-back）揭示他的位置；光束内尘埃持续飘动。","纵深要三层（前景桌虚 / 他清晰 / 窗外亮）。"],
+["HT-06","门框对比（日常反差）","a doorway scene: the boy stands in a doorway in a sports tank top, one hand on the door frame at exactly head height — and the frame is far above his head. He looks up at it, deadpan flat expression, one eyebrow slightly raised, all his effort compressed into a silent stare. Behind him a warm hallway, in front a dim room. Hard light from the side carving his profile, deep shadow filling the lower room.","景别：全身侧面。运动：镜头缓慢推近门框顶端；空气中尘埃缓慢下沉。","门框高度差要一眼看懂，属无声冲击。"]],
+"pr":[
+["PR-01","满桌蛋白（吃法冲击）","a dark warm dining scene: the boy sits at a table completely buried under an absurd mountain of food — grilled steaks, fried chicken breasts, eggs, salmon fillets, a huge bowl of milk, whey powder heaped in a shaker — his chin resting on the pile, both hands clutching a massive steak he is biting into with shameless enthusiasm, cheeks full, eyes squeezed in bliss. A single hard warm spotlight from above makes the food steam glow.","景别：中景正面。运动：镜头缓慢俯摇（tilt down）扫过食物山；食物缝隙热气持续升腾。","食量夸张＝卖点。禁写品牌包装（产品名不入画）。"],
+["PR-02","勺子挖蛋白粉","an extreme close-up of a large metal scoop plunged into a heaped mound of pale protein powder, the powder bulging and cascading off the scoop in a frozen cascade, fine dust exploding outward in a slow-motion cloud lit by a hard backlight. The boy's hand and white tank top are visible out of focus behind, a water bottle catching a bright specular edge. Dark background, radiant haze.","景别：微距特写。运动：镜头极慢推近；粉末持续倾泻（一次性大幅事件 ⇒ i2v 首选）。","★ 粉末＝最上镜的可动之物。微距镜头部要留一点环境，别成纯物。"],
+["PR-03","挖空蛋白桶（代价感）","a kitchen counter shot: an enormous open protein tub sits with its lid off, the powder scooped out leaving a deep crater with a smooth spiral wall, a metal scoop stuck inside. Beside it, a towering empty stack of food containers and a few lonely chicken bones, telling the story of months of eating. The boy stands behind the counter arms folded, looking down at the crater with quiet resolve. Hard top light, deep shadows, warm amber palette.","景别：中景。运动：镜头缓慢环绕；空气中细微尘埃持续飘动。","吃得多用空桶＋骨头堆表达，比堆满更高级。"],
+["PR-04","蛋白配巨饭（荒诞喜感）","a comedic over-the-top composition: the boy stands holding a plate piled absurdly high with food, the stack so tall it towers past his head and wobbles precariously, his arms straining, eyes wide tracking the top of the stack, sweat drops flying off his temple. A single hard rim light outlines the food tower against a completely dark kitchen, steam rising in one clean column.","景别：中景仰拍。运动：镜头缓慢下摇跟随食物塔；汗滴持续飞离。","食物塔要稳但危险，动效做轻微摇晃即可。"],
+["PR-05","训练后补给（能量回血）","a gym floor scene at night: the boy sits on a rubber mat, forearm on his knee, head lowered catching his breath, a shaker bottle and a plate of steak beside him. His skin is flushed and glistening, a hard warm spotlight isolates him in the dark gym, cold blue ambient light in the background, chalk dust in the air. A sense of quiet satisfaction, not exhaustion.","景别：中景。运动：镜头缓慢推近；呼吸起伏（0 积分动效即可）。","练完吃是转化前的好铺垫，别让他显得很累（会掉好感）。"]],
+"mt":[
+["MT-01","深夜应酬（肝油）","a late-night restaurant booth: the boy slumps back in the seat, shirt still on, one hand on his stomach, eyes bloodshot and heavy with fatigue, an oily sheen on his forehead and around his nose. The table in front is cluttered with empty dishes and cups, ice melted in a bucket. A single cold overhead light with a warm neon edge from the window, smoke haze in the air, sickly green-yellow light bouncing off his face.","景别：中景。运动：镜头缓慢横移；烟气持续上升。","★ 不出现酒瓶（合规：不得暗示未成年人饮酒）。用菜盘＋困倦表达应酬。"],
+["MT-02","屏幕蓝光熬夜","a dark bedroom lit only by a large monitor: the boy sits cross-legged on the bed, face lit from below by cold blue screen light, deep eye bags, dull skin, slouched shoulders, one hand frozen on the mouse. The screen glow spills across the wall behind him as a second faint blue rectangle. Heavy darkness, only the face and hands are readable, dust in the light beam.","景别：中景。运动：屏幕光持续轻微呼吸式闪烁；尘埃持续飘动。","脸部上下打光是本条的灵魂，别打平光。"],
+["MT-03","体内浊气被困（超现实）","a stylized semi-transparent cutaway scene: the boy stands calmly while a glowing smoky mass of dark grey-green haze churns inside his torso, pressing outward at his ribs, his own hand pressing on his side with a discomforted grimace. The haze is semi-transparent and clearly readable as a separate internal element, swirling slowly; clean cool-blue ambient light outside, warm sickly glow inside. Dark neutral background, strong internal contrast.","景别：中景半透明。运动：内部浊气持续翻滚（i2v 可用）；镜头缓慢推近。","内部元素保持半透明，禁做成血腥内脏。"],
+["MT-04","金属沉积（重金属反差）","a conceptual studio scene: the boy stands at the left third in a relaxed power stance, watching a floating crystalline dark-metal shard hovering at the right third, its surface reflecting his own warped greyed-out face back at him like a poisoned mirror. The shard emits thin dark tendrils of dust falling downward and is rim-lit with a cold steel light, while the boy himself is lit warm. Split lighting: warm left, cold right, deep black background.","景别：中景 + 产品感悬浮物。运动：碎片缓慢自转；尘埃持续坠落。","悬浮物不放品牌。冷暖二分是这张的全部。"]],
+"mv":[
+["MV-01","镜像破碎登场","a cinematic opening shot: the boy stands centered before a huge circular mirror in a dark void, arms at his sides, calm stare, warm golden light from behind rim-lighting his entire outline. A single clean crack runs across the mirror from top to bottom, and behind the crack the world is a different, brighter version. Reflective floor, heavy atmosphere, dust in the air, strong single-point composition.","景别：全景对称。运动：镜头缓慢推近；裂缝内外的光持续呼吸。","封面级构图：左右严格对称，底部 1/4 只留干净地面。"],
+["MV-02","逆光登场特写","a dramatic low-angle hero shot of the boy standing tall, seen from below, one arm raised holding a plain unbranded shaker bottle above his head, hard warm spotlight behind him creating a full-body rim light and a long shadow toward camera. Heavy dark background with a single visible light source, thick atmosphere and floating dust, lens-flare streaks radiating from behind his head.","景别：仰拍全身。运动：镜头缓慢上摇；光束内尘埃持续翻涌。","逆光镜必查肌肉白色硬高光条（画风漂移信号）。"],
+["MV-03","冷暖分界（态度）","a symmetrical portrait: the left half of the frame is cold blue with the boy standing slouched, shoulders dropped, eyes down; the right half is warm amber with him standing tall, chin up, hand on chest, eyes forward. A hard vertical seam of white light divides the two, the same floor and same character in both halves, particles only on the warm side, low fog along the floor.","景别：双全身对称。运动：镜头缓慢横移跨越分割线。","分屏两侧服装/体型/比例必须完全一致，只有光与姿态变。"],
+["MV-04","环境气场（无主体物）","an environmental establishing shot: an empty dark gym interior at dawn, a single shaft of golden light cutting through high windows onto the rubber floor, chalk dust suspended in the beam, a chalk-drawn arrow on the floor pointing toward the light, heavy atmospheric depth, no people. Extremely simple composition, huge negative space on the left two-thirds.","景别：大远景（空镜）。运动：缓慢横移（lateral truck）；尘埃持续飘落。","空镜是字幕与转场的呼吸位，负空间必须够大。"]],
+"pd":[
+["PD-01","举瓶欢呼（通用主图）","a gym interior at night: the boy stands in a wide power stance, right arm fully extended UP holding a PLAIN WHITE UNLABELED supplement bottle above his head, face tilted up toward the bottle, mouth open in a shout of triumph, left fist clenched at his side. Warm overhead spot, dumbbell rack blurred in the background, dust motes drifting through the beam, strong rim light, high contrast.","景别：仰拍全身。运动：镜头缓慢上摇；尘埃持续飘动。","★ 角色与产品必须并排分离——产品置于脸前会挡住角色（实战废图教训）。瓶身无任何文字。"],
+["PD-02","配料表摊开（理性）","a desk shot from a high three-quarter angle: a white unbranded bottle stands on the left third, the boy stands on the right with his LEFT forearm resting on the desk edge and his RIGHT hand open-palmed gesturing toward a printed nutrition label card lying flat between them, his eyes looking down at the card, brow slightly furrowed. Cool-warm split lighting, clean dark background, dust in the light.","景别：中景俯拍。运动：镜头沿桌面缓慢推进；纸张边角持续轻微翻动。","桌上卡片后期再贴真图，生成时留空。"],
+["PD-03","粉剂特写（配勺）","a macro still: a mound of fine pale yellow powder on a dark slate surface with a metal scoop plunged into it, powder cascading off the scoop edge frozen mid-air, a backlit haze behind, a white unbranded bottle softly out of focus in the far background, warm amber glow, dark rich palette.","景别：微距。运动：粉末持续倾泻（i2v 首选）。","底部 1/4 留干净台面给字幕。"],
+["PD-04","产品到手（开箱）","a top-down view of an opened kraft shipping box on a warm wooden table, a white unbranded bottle standing inside it, a folded paper document leaning against the box edge, tissue shreds still suspended in the air above the box, warm window light raking across the wood, cozy home atmosphere, no people.","景别：俯拍近景。运动：纸屑持续飘落；镜头缓慢下降。","俯拍时产品不得压画面边缘；纸屑是唯一可动之物。"]],
+"ac":[
+["AC-01","引体向上爆发","a dramatic low-angle shot: the boy hangs at the top of a pull-up, chin above the bar, arms fully extended and shoulders engaged, back and biceps sharply defined, mid-motion with slight upward momentum. A single hard side light carves the muscle groups, deep black gym background, chalk dust in the air, a metal-framed gym window backlighting him.","景别：仰拍全身。运动：一次性大幅事件（上拉爆发）⇒ i2v 首选；或 0 积分抖动代替。","背阔肌高光条必查（画风漂移信号）。"],
+["AC-02","俯卧撑雨地","a low ground-level shot: the boy holds the bottom of a push-up on rain-wet concrete, body in a straight line, water splashing off his shoulders, rain streaks lit by a hard backlight, his face close to camera with grit teeth and focused eyes. Wet reflections on the dark ground, atmospheric haze, high contrast.","景别：贴地近景。运动：一次性大幅事件（水花迸溅）⇒ i2v 首选。","水花是白送的动感；禁在室内下大雨。"],
+["AC-03","仰卧举哑铃","a dark gym floor shot: the boy lies on a bench pressing a heavy dumbbell up, arms extended, chest and forearms taut, one hand slightly open, jaw clenched with effort. A single hard overhead spot makes the dumbbell and forearm glow against near-total darkness, sweat droplets frozen in the air, deep shadows.","景别：低角度中近景。运动：一次性大幅事件（推举）⇒ i2v 首选。","哑铃不写品牌；汗滴可用 0 积分粒子替代。"]],
+"sm":[
+["SM-01","数据长图头图","the boy at the lower right corner in a relaxed power stance pointing up-left with one finger; the entire upper-left two-thirds is clean dark gradient with one hard light shaft crossing it, particles concentrated near the shaft, heavy atmosphere. Enormous empty space for text overlay.","景别：远景。运动：缓慢推近；粒子持续飘散。","文字区留空 ≥2/3；生成时禁 text。"],
+["SM-02","九宫格切片","a vertical composition built for a 3:4 crop: the boy's hand holding a plain white bottle extremely close to the camera (huge in frame, blurred), his face small and sharp in the upper background, a hard light streak connecting them, dust between, deep perspective.","景别：强制大透视。运动：镜头从近景缓慢后拉揭示人物。","近景物必虚化；主体在远景要清晰。"],
+["SM-03","收尾 CTA","the boy stands at the right third facing the camera with both thumbs up, weight on one leg, relaxed confident half-smile, a white unbranded bottle standing on a clean pedestal at the left third. Warm golden backlight, wide clean pedestal front face filling the entire bottom quarter, soft fog along the floor.","景别：全身＋大量底部留白。运动：仅呼吸式微动（0 积分动效）。","★ 底部 1/4 必须完全干净——这是 CTA 字幕区。"]]
+};
+const P = [document.getElementById('p1').textContent, document.getElementById('p2').textContent,
+           document.getElementById('p3').textContent, document.getElementById('p4').textContent].join("\n\n");
+let total = 0;
+for (const [k, rows] of Object.entries(DATA)) {
+  const tb = document.getElementById('tb-'+k);
+  if (!tb) continue;
+  total += rows.length;
+  tb.innerHTML = rows.map((r,i) => `<tr>
+   <td class="id">${r[0]}<br><button class="btn" data-k="${k}" data-i="${i}">复制完整</button></td>
+   <td class="scene">${r[1]}</td><td class="body">${r[2]}</td>
+   <td class="shot">${r[3]}</td><td class="note">${r[4]}</td></tr>`).join('');
+}
+document.querySelectorAll('button[data-i]').forEach(b=>{
+  b.onclick=()=>{
+    const row = DATA[b.dataset.k][+b.dataset.i];
+    const full = P + "\n\nCREATIVE: " + row[2] + "\n";
+    navigator.clipboard.writeText(full).then(()=>{ b.textContent='已复制 ✓'; b.classList.add('ok');
+      setTimeout(()=>{ b.textContent='复制完整'; b.classList.remove('ok'); },1500); });
+  };
+});
+document.querySelectorAll('pre').forEach((pre,i)=>{
+  const b=document.createElement('button'); b.className='btn'; b.textContent='复制';
+  b.style.cssText='float:right;margin-top:-4px';
+  b.onclick=()=>{ navigator.clipboard.writeText(pre.textContent).then(()=>{b.textContent='已复制 ✓';b.classList.add('ok');setTimeout(()=>{b.textContent='复制';b.classList.remove('ok')},1400);}); };
+  pre.style.position='relative'; pre.appendChild(b);
+});
+console.log("条目数:", total);
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+# ============================================================
+#  WorkBuddy 技能仓库 .gitignore
+#  实测：koubo-ad-video 114MB → 15.1MB / 223 文件
+#  原则：存「技能源码 + 文档 + 运行必需素材」，不存可再造的依赖/缓存/大二进制
+# ============================================================
+
+# ---------- 依赖与构建产物 ----------
+**/node_modules/
+**/.runtime/
+**/.cache/
+**/dist/
+**/build/
+**/out/
+**/.next/
+**/.parcel-cache/
+*.node
+*.pack_*
+*.wasm
+
+# ---------- Python 缓存 ----------
+**/__pycache__/
+*.pyc
+*.pyo
+**/.venv/
+**/venv/
+
+# ---------- 字体：只排超大 .ttc，保留渲染必需的 .otf/.ttf ----------
+# .ttc（如 STHeiti 53MB）体积过大且系统自带，排除
+**/assets/fonts/*.ttc
+**/fonts/*.ttc
+*.ttc
+# ★ .otf/.ttf 故意保留：字幕/标题渲染强依赖，小号缺了画面会变字体
+#   若仓库改为 Public，先把它们删掉（商用字体授权不允许公开分发）
+
+# ---------- 大媒体素材 ----------
+*.wav
+*.mp4
+*.mov
+*.mkv
+# 例外：压过的 BGM m4a 要保留（约 3MB，技能运行必需）
+!*/assets/bgm/*.m4a
+!**/assets/bgm/*.m4a
+
+# ---------- 备份与临时文件（本次实测剔除了 10 个 .bak_*）----------
+**/*.bak*
+**/*~
+**/*.orig
+**/.DS_Store
+**/._*
+# rsync 临时文件形态：.文件名.随机6位
+**/.?*.??????
+
+# ---------- 打包产物 ----------
+*.zip
+*.tar.gz
+*.7z
+
+# ---------- WorkBuddy 运行时状态（本机绝对路径，跨机无意义）----------
+.skill-list-cache.json
+.model_invocation_to_override_migration.json
+.disable_to_model_invocation_migration.json
+_bm_skillid_migration.json
+
+# ---------- 凭据 ----------
+**/.env
+**/.env.*
+**/bailian.json
+**/credentials.json
+**/token.json
+**/*secret*
+**/api_key*
+**/config.local.json
+
+# ---------- 嵌套 git 仓库 ----------
+**/.git/
+
+# ---------- 运行期产物 ----------
+**/work/
+**/tmp/
+**/output/
+**/_旧版备份/
+**/*.log

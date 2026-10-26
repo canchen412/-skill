@@ -1,0 +1,149 @@
+{
+ "_说明": "叙事音效 sfx_files 映射表（2026-10-08）。用法：config 顶层 sfx_files 填 mapping，trigger_sfx 里用 key。",
+ "_来源": "视频《百万剪辑师都在用的自带流量的音效》21.8s 纯音效演示（无人声）",
+ "_规格": "44.1kHz/单声道/16bit PCM wav，峰值归一 -3dBFS",
+ "mapping": {
+  "narr_flash": "爆款叙事音效_261008/01_开场闪光转场.wav",
+  "narr_ding": "爆款叙事音效_261008/02_叮叮叮_清脆点缀.wav",
+  "narr_query": "爆款叙事音效_261008/03_短促疑问音.wav",
+  "narr_cheer": "爆款叙事音效_261008/04_综艺哗_长铺底.wav",
+  "narr_metal": "爆款叙事音效_261008/05_金属敲击_叮咚.wav",
+  "narr_slide": "爆款叙事音效_261008/06_疾速机器滑音.wav",
+  "narr_metal2": "爆款叙事音效_261008/07_金属敲击_短促.wav",
+  "narr_thump": "爆款叙事音效_261008/08_沉重心跳_低频重击.wav",
+  "narr_tick": "爆款叙事音效_261008/09_秒针倒计时.wav",
+  "narr_shock": "爆款叙事音效_261008/10_震惊闷响.wav",
+  "narr_splash": "爆款叙事音效_261008/11_浪花溅起.wav",
+  "narr_light": "爆款叙事音效_261008/12_天光一现_高频闪.wav",
+  "narr_rise": "爆款叙事音效_261008/13_力量迸发渐强.wav",
+  "narr_final": "爆款叙事音效_261008/14_恍然大悟_收束.wav"
+ },
+ "音效清单": [
+  {
+   "key": "narr_flash",
+   "file": "01_开场闪光转场.wav",
+   "node": "开场钩子",
+   "dur": "0.16s",
+   "use": "超高频闪，开场第一帧/切白瞬间",
+   "exists": true,
+   "real_dur": 0.16
+  },
+  {
+   "key": "narr_ding",
+   "file": "02_叮叮叮_清脆点缀.wav",
+   "node": "能量点",
+   "dur": "0.38s",
+   "use": "三连清脆叮，念产品名/数字时逐字点缀",
+   "exists": true,
+   "real_dur": 0.38
+  },
+  {
+   "key": "narr_query",
+   "file": "03_短促疑问音.wav",
+   "node": "提出问题",
+   "dur": "0.28s",
+   "use": "短促上扬，抛问句设悬念",
+   "exists": true,
+   "real_dur": 0.28
+  },
+  {
+   "key": "narr_cheer",
+   "file": "04_综艺哗_长铺底.wav",
+   "node": "突然转折",
+   "dur": "1.02s",
+   "use": "人群哗然，转折点铺底",
+   "exists": true,
+   "real_dur": 1.02
+  },
+  {
+   "key": "narr_metal",
+   "file": "05_金属敲击_叮咚.wav",
+   "node": "能量点",
+   "dur": "0.72s",
+   "use": "金属叮咚，数据/参数弹出点缀",
+   "exists": true,
+   "real_dur": 0.72
+  },
+  {
+   "key": "narr_slide",
+   "file": "06_疾速机器滑音.wav",
+   "node": "突然转折",
+   "dur": "2.18s",
+   "use": "快速机械滑音，转场垫片（偏长，建议裁短）",
+   "exists": true,
+   "real_dur": 2.18
+  },
+  {
+   "key": "narr_metal2",
+   "file": "07_金属敲击_短促.wav",
+   "node": "能量点",
+   "dur": "0.30s",
+   "use": "更脆的短促金属敲，密集点缀",
+   "exists": true,
+   "real_dur": 0.3
+  },
+  {
+   "key": "narr_thump",
+   "file": "08_沉重心跳_低频重击.wav",
+   "node": "循序渐进/倒计时",
+   "dur": "1.48s",
+   "use": "★全场最有分量，结论砸下/before-after重锤",
+   "exists": true,
+   "real_dur": 1.48
+  },
+  {
+   "key": "narr_tick",
+   "file": "09_秒针倒计时.wav",
+   "node": "循序渐进/倒计时",
+   "dur": "0.72s",
+   "use": "秒针滴答，列举步骤/铺垫",
+   "exists": true,
+   "real_dur": 0.72
+  },
+  {
+   "key": "narr_shock",
+   "file": "10_震惊闷响.wav",
+   "node": "突然转折",
+   "dur": "0.92s",
+   "use": "★闷雷式震惊，揭示真相/反转",
+   "exists": true,
+   "real_dur": 0.92
+  },
+  {
+   "key": "narr_splash",
+   "file": "11_浪花溅起.wav",
+   "node": "天光一现",
+   "dur": "0.28s",
+   "use": "水花轻溅，清新舒缓段小点缀",
+   "exists": true,
+   "real_dur": 0.28
+  },
+  {
+   "key": "narr_light",
+   "file": "12_天光一现_高频闪.wav",
+   "node": "天光一现",
+   "dur": "0.36s",
+   "use": "★最亮一下，顿悟/答案揭晓",
+   "exists": true,
+   "real_dur": 0.36
+  },
+  {
+   "key": "narr_rise",
+   "file": "13_力量迸发渐强.wav",
+   "node": "积极爆发",
+   "dur": "1.18s",
+   "use": "渐强到爆发，力量镜/训练高潮铺垫",
+   "exists": true,
+   "real_dur": 1.18
+  },
+  {
+   "key": "narr_final",
+   "file": "14_恍然大悟_收束.wav",
+   "node": "恍然大悟",
+   "dur": "3.11s",
+   "use": "★3.1s长收束，片尾CTA落幅（偏长，建议淡出）",
+   "exists": true,
+   "real_dur": 3.112
+  }
+ ]
+}

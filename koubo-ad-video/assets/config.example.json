@@ -1,0 +1,218 @@
+{
+  "ffmpeg": "ffmpeg",
+  "workdir": "/tmp/adwork",
+  "output": "/tmp/adwork/口播成片.mp4",
+  "vo": "/path/to/口播.mp3",
+  "vo_gain": 1.46,
+  "bgm": null,
+  "_BGM注释_2026-09-23": "★曲池随机：bgm 留空/null = 从 assets/bgm/ 下所有 bgm_* 音频里随机挑一首（当前 2 首：bgm_我爱吃派大星.wav、bgm_吴崽崽.wav），并避开上一首（记在 _bgm_last.json）；写路径 = 指定该曲；'bgm_pick':'order' = 顺序轮换；false = 本条不要 BGM。新曲入库先跑 scripts/prep_bgm.py 拉平动态（--profile flat --target -22），再对拍确认两首成片 LUFS 差 ≤0.5dB。默认 bgm_auto_gain=true 会现场测口播/BGM 电平，把 BGM 压到『口播 − bgm_offset_db(默认10dB)』并叠 sidechain 闪避；想手调固定音量就写 bgm_volume（会自动跳过配平）。BGM 短于成片会自动循环补足。",
+  "cover": null,
+  "_封面帧注释_2026-09-18": "默认开，不用写！留空/null = 自动用内置固定封面 assets/cover/default_cover_3x4.jpg（用户拍板：以后用这版贴开头）。换图写 {\"src\": \"新3比4图.jpg\"}，关掉写 false，调参写 {\"dur\": 0.1, \"fit\": \"blur\"}。把竖版图(推荐精确3:4)铺在视频最开头，抖音取首帧做封面时就是它，不用手动设封面。覆盖式实现：不改变总时长、不推迟口播。fit: blur(默认,两侧原图模糊铺满,平台裁中间3:4=干净原图) | pad(纯黑边)。dur 默认0.1s≈3帧，别低于1帧。",
+  "tokens": "/tmp/adwork/vo_fixed.json",
+  "tail": 0.9,
+  "fps": 30,
+  "sub_size": 78,
+  "_重点字定式_2026-09-17": "字体=新青年体(assets/fonts 随技能分发, 代码默认, 可用 kw_font 覆盖)；kw_color 统一深黄覆盖 style 预设色(想恢复多色语义就删掉它)；全片只放 3-4 个词；kw_min_gap=词与词最小间隔、sfx_gap_prominent=响亮音效(重点字/标题卡/分层入场/唿哨)最小间隔，都设 5s —— 用户要求'5 秒内不能出现两次'",
+  "kw_size": 132,
+  "kw_color": "&H0000D4FF",
+  "_重点字音色注释_2026-09-18": "⚠️ 绝对不要写 kw_sfx_default！用户 2026-09-18 反馈：写了之后全片 4-5 个重点字全是同一个『叮』，听感单一。正解 = 在 keywords 里逐词写 sfx，按词意挑音色：开场点题 kw_boom(全片唯一低音,镇场) / 能量·爆发·续航 kw_charge / 数据·纯度·成分 kw_glass / 数字·利益点 kw_bloom / 价格·福利 kw_triple / 警告·踩坑·禁忌 kw_thump / 概念术语 kw_riser / 收尾·CTA·背书 kw_shine / 通用弹出 kw_pop、kw_spring / 轻点 kw_click / 双音 kw_ding。一条片里每个词用不同音色、相邻不撞色，同语义词跨片固定用同一款。全部在 assets/sfx/，峰值统一 -9dBFS；新增音色除落盘外必须登记进 build_ad_video.py 的 sfx_files 白名单 + DEFAULT_SFX_VOL，否则渲染器不加载。",
+  "kw_min_gap": 5.0,
+  "sfx": true,
+  "opening_punch": true,
+  "opening_punch_sfx": false,
+  "sfx_volume": {
+    "whoosh": 1.2
+  },
+  "_img_fit_note": "img_fit: cover(默认,等比放大裁切,不拉伸) / contain(留边) / safe(模糊补边,人物顶天立地用); crop_y: 3:2素材垂直裁切起点,默认0=顶部对齐(保头切脚),主体偏下写150~300",
+  "img_fit": "cover",
+  "crop_y": 0,
+  "loudnorm": {
+    "I": -11.5,
+    "TP": -0.7,
+    "LRA": 11
+  },
+  "loudness_boost_db": 3.0,
+  "_整体响度注释_2026-09-18": "全片响度 = loudnorm.I + loudness_boost_db，默认 3.0 → -8.5 LUFS（实测天花板，再高只挤压不增益）。改整体大小只动这一个数。⚠️ 改 vo_gain/bgm_volume 对成片响度无效——链尾 loudnorm 会拉回目标，加多少减多少；而且'配音和BGM一起提10dB'等于什么都没做（实测一致）。",
+  "sub_highlights": [
+    {
+      "kw": "烟酰胺",
+      "color": "&H0000FFFF"
+    },
+    {
+      "kw": "16mg",
+      "color": "&H0000FFFF"
+    }
+  ],
+  "swing_shots": [
+    2,
+    5,
+    8,
+    11,
+    14
+  ],
+  "transition_whoosh": [
+    2,
+    5,
+    8,
+    11,
+    14
+  ],
+  "motion_style": {
+    "ease": "out",
+    "breath": 0.006,
+    "shake": 1.0,
+    "grain": 6,
+    "vignette": true,
+    "intensity": 1.0
+  },
+  "sfx_min_gap": 0.6,
+  "sfx_gap_whoosh": 0.6,
+  "sfx_gap_prominent": 5.0,
+  "layer_sfx_lead": 0.08,
+  "_分层音效注释": "抠图分层镜自动配上场音效(弹入→pop_in/浮动→float_in)，音量与转场唿哨一致；与转场唿哨撞车或间隔<sfx_min_gap 时自动取消转场唿哨",
+  "phrases": [
+    {
+      "text": "为什么别人运动生龙活虎，",
+      "kind": "img",
+      "src": "/path/to/镜1.png"
+    },
+    {
+      "text": "你跑两步就喘？",
+      "kind": "img",
+      "src": "/path/to/镜2.png",
+      "flip": true,
+      "motion": "zoom_out",
+      "_注释": "flip=镜像/motion=指定动效，图库复用时防画面重复用"
+    },
+    {
+      "text": "不是你不行，是营养没跟上！",
+      "kind": "img",
+      "src": "/path/to/_分层/镜3_fg.png",
+      "_抠图分层注释": "背景干净的图可做抠图分层：src/fg 指人物透明层，bg 指 _bg_soft.png，fg_motion=popin(弹入,首登场/重点句)|float(浮动,持续展示)，fg_in 入场秒数默认 0.6",
+      "bg": "/path/to/_分层/镜3_bg_soft.png",
+      "fg": "/path/to/_分层/镜3_fg.png",
+      "fg_motion": "popin"
+    },
+    {
+      "text": "现在的年轻人熬夜、外卖、久坐，",
+      "kind": "img",
+      "src": "/path/to/镜4.png"
+    },
+    {
+      "text": "日常饮食里缺的锌等微量元素根本补不齐，",
+      "kind": "img",
+      "src": "/path/to/镜5.png"
+    },
+    {
+      "text": "每天两粒牡蛎锌多维能量片就是版本答案！",
+      "kind": "img",
+      "src": "/path/to/镜6.png"
+    },
+    {
+      "text": "牡蛎粉精华搭配柠檬酸锌，吸收更好。",
+      "kind": "img",
+      "src": "/path/to/镜7.png"
+    },
+    {
+      "text": "还有维生素B1、B2、B6，精准补上关键营养。",
+      "kind": "img",
+      "src": "/path/to/镜8.png"
+    },
+    {
+      "text": "不管运不运动，都适合日常补充。",
+      "kind": "img",
+      "src": "/path/to/镜9.png"
+    },
+    {
+      "text": "每天两粒才几毛钱，性价比拉满！",
+      "kind": "img",
+      "src": "/path/to/镜10.png"
+    },
+    {
+      "text": "左下角囤3瓶吃满一个周期，",
+      "kind": "img",
+      "src": "/path/to/镜11.png"
+    },
+    {
+      "text": "状态直接起飞！",
+      "kind": "img",
+      "src": "/path/to/镜12.png"
+    }
+  ],
+  "_可选能力_要用时再加": {
+    "keywords_弹出重点字": [
+      {
+        "kw": "版本答案",
+        "phrase": 5,
+        "pos": [
+          960,
+          270
+        ],
+        "sfx": "impact"
+      }
+    ],
+    "title_cards_全屏大字": [
+      {
+        "phrase": 11,
+        "text": "状态直接起飞",
+        "size": 150,
+        "y": 430,
+        "color": "&H0000FFFF",
+        "dur": 1.7
+      }
+    ],
+    "产品图贴图": {
+      "over": {
+        "src": "/path/to/产品图.png",
+        "w": 620,
+        "pos": "tr",
+        "delay": 0.12,
+        "fade": 0.3
+      }
+    },
+    "_产品详情卡片注释": "圆角+白边+投影，滑入/滑出，自动贴主体人物旁边且不压人物。先跑：python3 scripts/make_cards.py 详情图.jpg --w 450 --out <workdir>/cards（需 venv python）；顶层加 product_cards: [{\"src\":\"...\",\"phrase\":8,\"span\":1,\"in_off\":0.5,\"out_off\":0.15,\"w\":450,\"pos\":\"auto\",\"anim\":\"slide\"}]（pos: auto|tl|tr|bl|br|[x,y]；anim: slide|fade）",
+    "全屏成分表": {
+      "fit": "contain",
+      "pad_color": "white"
+    },
+    "产品视频段": {
+      "kind": "prod",
+      "video": "/path/to/产品视频.mov",
+      "src": [
+        220.5,
+        225.5
+      ]
+    },
+    "全片静音效": {
+      "sfx": false
+    },
+    "开场撕裂": {
+      "opening_tear": 0.8
+    },
+    "开场冲击包_零积分开场": {
+      "opening_burst": {
+        "preset": "energy",
+        "dur": 0.74,
+        "flash": true,
+        "shake": 1.0,
+        "sfx": true
+      }
+    },
+    "_开场冲击注释_2026-09-18": "正片开头几秒的画面本身叠程序化动效 + 配套音效，一开头就抓人。⚠️ 不是独立片头段——旧的 hook 已废弃（用户明确否决），代码里写 hook 只会告警并忽略。关键：不新增时长、不动任何时间轴，只叠画面与音效。preset: energy(能量爆发,默认首选) | lightning(闪电劈下,反差结论) | powder(粉末炸开,补剂冲泡) | impact(铁片砸地,强结论警告) | pulse(心跳泵感,痛点共鸣) | countdown(数字冲刺,数据开场)。元素素材内置在 assets/burst/（rays/bolt/spark/shock/lines.png，由 scripts/make_burst_assets.py 纯程序化生成，0 积分），要改样子就改脚本重跑。dur 不给按 preset 默认；shake 是倍率(1.0≈±12px 衰减式抖动)；lead 默认 0.04（冲击整体后移，给封面留干净首帧）；flash_alpha 可降白闪峰值（lightning 用 0.82，否则白闪会盖住闪电）；false 关闭。",
+    "_开场冲击调参铁律_2026-09-18": "元素不透明度上限与「元素覆盖率」成反比：云状/粒子型（spark，铺满画面）a≤0.60 且 dur≤0.65s——powder 初版 a=1.0/dur=0.85 把主角整段埋进云里；环形线条型（shock/rays）a 0.45~0.75、z 放到 4~4.3 都不糊。判据：开场窗口内每 0.1s 抽帧，主角必须始终可辨认（唯一例外是闪白本身）。",
+    "_试开场用预览模式": "AD_PREVIEW_SEC=3.0 python3 scripts/build_ad_video.py config.json —— 只渲染前 3 秒（-t 截断，滤镜链不变，画面音效与整片一致），产物写 <workdir>/preview/<原名>_预览3s.mp4，不落素材盘。批量试多个 preset 时每个只要十几秒。AD_PREVIEW_DIR 可改目录，最小 0.5s。"
+  },
+  "kw_super_size": 170,
+  "kw_super_color": "&H00FFFFFF",
+  "kw_super_x_bands": [
+    [
+      0.05,
+      0.3
+    ],
+    [
+      0.7,
+      0.95
+    ]
+  ],
+  "_超重字注释_2026-09-24": "★超级重点字：keywords 里给该词加 \"super\": true 即启用——字号自动 kw_super_size（默认170，普通重点字 kw_size=132）、纯白 kw_super_color、落位强制左右两侧带（kw_super_x_bands，框中心约束，绝不压人物主体）、音效必加且不受 kw_min_gap 5s 节流、动效默认 hero 白色超级弹跳。定式：点题句（「今天我们讲，X」等）里的产品名一律 super。"
+}

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#0E1013}
+body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+.stage{position:relative;width:1920px;height:1080px;display:flex;align-items:center;justify-content:center}
+.top{position:absolute;top:180px;left:0;width:100%;text-align:center;color:#5B6470;
+  font-size:32px;letter-spacing:.35em;font-weight:600}
+.bottom{position:absolute;bottom:150px;left:0;width:100%;text-align:center;color:#3C434D;
+  font-size:28px;letter-spacing:.15em}
+.core{display:flex;flex-direction:column;align-items:center;gap:70px}
+
+/* 字幕行：外层 mask 裁剪，内层上浮/上滑；grid 叠层让四行同位切换 */
+.clip{overflow:hidden;display:grid;padding:1.5em .1em .24em;margin:-1.5em -.1em -.24em}
+.line{grid-area:1/1;justify-self:center;position:relative;
+  display:inline-block;font-size:80px;font-weight:800;color:#F2F3F5;
+  letter-spacing:.02em;white-space:nowrap;
+  animation:rise .5s cubic-bezier(.16,1,.3,1) both, lineExit .22s ease-in forwards}
+
+/* 每行独立时间轴（绝对时间，页面 0 点为原点） */
+.l1{animation-delay:.05s,1.95s}
+.l2{animation-delay:2.15s,3.95s}
+.l3{animation-delay:4.15s,5.95s}
+.l4{animation-delay:6.15s,99s}   /* 最后一行不退场 */
+
+/* 关键词：金色 + 红色错版阴影，弹出时缩放强调 */
+.kw{display:inline-block;color:#FFC400;position:relative;
+  text-shadow:6px 6px 0 rgba(226,59,46,.92);
+  animation:kwPop .45s cubic-bezier(.34,1.56,.64,1) both}
+.k1{animation-delay:.95s}
+.k2{animation-delay:3.05s}
+.k3{animation-delay:5.05s}
+.k4{animation-delay:7.05s}
+
+/* 「重点」小标签，随关键词一起砸出来 */
+.tag{position:absolute;top:-.78em;right:-.4em;font-style:normal;
+  background:#E23B2E;color:#fff;font-size:26px;font-weight:700;letter-spacing:.12em;
+  padding:8px 16px;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.45);
+  animation:tagIn .4s cubic-bezier(.34,1.56,.64,1) both}
+.k1 .tag{animation-delay:.95s}
+.k2 .tag{animation-delay:3.05s}
+.k3 .tag{animation-delay:5.05s}
+.k4 .tag{animation-delay:7.05s}
+
+@keyframes rise{from{transform:translateY(185%)}to{transform:translateY(0)}}
+@keyframes lineExit{to{transform:translateY(-150%);opacity:0}}
+@keyframes kwPop{0%{transform:scale(1)}45%{transform:scale(1.32)}75%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes tagIn{0%{transform:scale(0) rotate(-8deg)}60%{transform:scale(1.25) rotate(-8deg)}100%{transform:scale(1) rotate(-8deg)}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="top">AI CAPTION VIDEO 风格</div>
+  <div class="core">
+    <div class="clip">
+      <div class="line l1 animated">今天我们讲，<span class="kw k1 animated">肌酸<i class="tag animated">重点</i></span>怎么选。</div>
+      <div class="line l2 animated">认准<span class="kw k2 animated">销量第一<i class="tag animated">重点</i></span>的头牌。</div>
+      <div class="line l3 animated"><span class="kw k3 animated">检测报告<i class="tag animated">重点</i></span>，随你拿去比。</div>
+      <div class="line l4 animated"><span class="kw k4 animated">先存着<i class="tag animated">重点</i></span>，后面不慌。</div>
+    </div>
+  </div>
+  <div class="bottom">DEMO A · 大字报关键词高亮</div>
+</div>
+<script>
+function setTime(t){
+  const ms = t * 1000;
+  document.getAnimations().forEach(a => { a.pause(); a.currentTime = ms; });
+}
+window.setTime = setTime;
+document.fonts.ready.then(() => { window.__ready = true; });
+window.__ready = true;
+</script>
+</body>
+</html>

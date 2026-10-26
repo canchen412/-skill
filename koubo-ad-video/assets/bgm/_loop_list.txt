@@ -1,0 +1,3 @@
+file '/Users/mac/.workbuddy/skills/koubo-ad-video/assets/bgm/bgm_吴崽崽.wav'
+file '/Users/mac/.workbuddy/skills/koubo-ad-video/assets/bgm/bgm_吴崽崽.wav'
+file '/Users/mac/.workbuddy/skills/koubo-ad-video/assets/bgm/bgm_吴崽崽.wav'

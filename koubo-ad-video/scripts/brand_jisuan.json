@@ -1,0 +1,35 @@
+{
+ "brand": "爱兰纯",
+ "product": "肌酸",
+ "norm_map": {},
+ "workspace": "/Users/mac/WorkBuddy/2026-10-08-16-41-58/ailan_chun_261009/pipeline",
+ "shots": [
+  "shots/01.png",
+  "shots/02.png",
+  "shots/03.png",
+  "shots/04.png",
+  "shots/05.png",
+  "shots/06.png",
+  "shots/07.png",
+  "shots/08.png",
+  "shots/09.png",
+  "shots/10.png",
+  "shots/11.png",
+  "shots/12.png",
+  "shots/13.png",
+  "shots/14.png",
+  "shots/15.png"
+ ],
+ "motions": {},
+ "ref_audio": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/voice/speaker_24k.wav",
+ "ref_text": "诺特兰德大品牌，这款一瓶才个位数，性价比直接拉满。里面还有多种必足维生素，很多兄弟平时蔬菜水果吃得少，维C、维E也都给你搭配好了。新款还升级添加雨生红球藻与葡萄籽。",
+ "sfx_scroll": "/Users/mac/WorkBuddy/2026-10-08-16-41-58/vorse_turmeric_redo/banner/sfx_3d.wav",
+ "sfx_dong": "/Users/mac/WorkBuddy/2026-10-05-09-33-49/jisuan_alan_video_261006/gen/定格咚_B_trim.mp3",
+ "cover": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/cover/default_cover_3x4.jpg",
+ "bgm": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/bgm/bgm_吴崽崽.wav",
+ "sub_size": 78,
+ "fx": {
+  "enabled": true
+ },
+ "cards_dir": "cards_j"
+}

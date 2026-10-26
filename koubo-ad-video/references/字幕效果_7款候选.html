@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>字幕效果候选 · 烟酰胺</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0b0b10; color:#eee; font-family:"PingFang SC","Hiragino Sans GB",sans-serif; padding:28px 4vw 60px; }
+  h1 { font-size:20px; font-weight:700; margin-bottom:6px; }
+  .tip { color:#888; font-size:13px; margin-bottom:24px; }
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; }
+  @media (max-width:1100px){ .grid{grid-template-columns:1fr;} }
+  .card { border-radius:12px; overflow:hidden; background:#000; position:relative; box-shadow:0 4px 18px rgba(0,0,0,.5); }
+  .card .stage { position:relative; width:100%; aspect-ratio:16/9; background:url('bg.jpg') center/cover; }
+  .card .stage::before { content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 45%); }
+  .tag { position:absolute; top:10px; left:10px; background:rgba(0,0,0,.65); color:#F2C14E; font-size:12px; padding:3px 10px; border-radius:20px; z-index:3; letter-spacing:1px; }
+  .sub { position:absolute; left:0; right:0; bottom:7%; display:flex; justify-content:center; z-index:2; }
+  /* ── 通用逐字 ── */
+  .ch { display:inline-block; white-space:pre; }
+  /* ══ 1 现役卡拉OK ══ */
+  .v1 .ch { color:#9a958c; font-size:44px; font-weight:800; animation: v1fill 5s steps(1) infinite; text-shadow:0 2px 6px rgba(0,0,0,.8); }
+  .v1 .kw { color:#9a958c; }
+  @keyframes v1fill { 0%{color:#9a958c} 8%{color:#fff} 96%{color:#fff} 100%{color:#9a958c} }
+  .v1 .kw { animation: v1kw 5s steps(1) infinite; }
+  @keyframes v1kw { 0%{color:#9a958c} 52%{color:#F2C14E} 96%{color:#F2C14E} 100%{color:#9a958c} }
+  /* ══ 2 卡拉OK+扫光 ══ */
+  .v2 .ch { color:#8f8a81; font-size:44px; font-weight:800; position:relative; text-shadow:0 2px 6px rgba(0,0,0,.8); animation: v2fill 5s steps(1) infinite; }
+  @keyframes v2fill { 0%{color:#8f8a81} 8%{color:#fff} 96%{color:#fff} 100%{color:#8f8a81} }
+  .v2 .sweep { position:absolute; inset:0; background:linear-gradient(105deg, transparent 40%, rgba(255,240,180,.95) 50%, transparent 60%); background-size:250% 100%; mix-blend-mode:screen; animation: v2sweep 5s ease infinite; pointer-events:none; }
+  @keyframes v2sweep { 0%,6%{background-position:120% 0} 30%{background-position:-60% 0} 94%{background-position:-60% 0} 100%{background-position:120% 0} }
+  .v2 .kw { color:#F2C14E; }
+  /* ══ 3 弹跳逐字 ══ */
+  .v3 .ch { color:#fff; font-size:46px; font-weight:900; opacity:0; text-shadow:0 3px 0 rgba(0,0,0,.7),0 2px 8px rgba(0,0,0,.8); animation: v3pop 5s cubic-bezier(.34,1.56,.64,1) infinite; }
+  .v3 .kw { color:#F2C14E; }
+  @keyframes v3pop { 0%{opacity:0; transform:scale(2.2) translateY(12px)} 7%{opacity:1; transform:scale(1)} 94%{opacity:1} 100%{opacity:0} }
+  /* ══ 4 黑条卡拉OK ══ */
+  .v4 .bar { background:rgba(8,8,12,.82); border-radius:14px; padding:12px 30px; display:flex; }
+  .v4 .ch { color:#777; font-size:42px; font-weight:800; animation: v4fill 5s steps(1) infinite; }
+  @keyframes v4fill { 0%{color:#777} 8%{color:#fff} 96%{color:#fff} 100%{color:#777} }
+  .v4 .kw { animation: v4kw 5s steps(1) infinite; }
+  @keyframes v4kw { 0%{color:#777} 52%{color:#F5D061} 96%{color:#F5D061} 100%{color:#777} }
+  /* ══ 5 大字报抖动重点 ══ */
+  .v5 .ch { color:#f3efe6; font-size:46px; font-weight:900; text-shadow:3px 3px 0 #000, -1px -1px 0 #000; }
+  .v5 .kw { display:inline-block; color:#F2C14E; text-shadow:3px 3px 0 #000; animation: v5shake 5s ease infinite; }
+  @keyframes v5shake { 0%,50%{transform:scale(1)} 54%{transform:scale(1.25) rotate(-2deg)} 58%{transform:scale(1.12) rotate(1.5deg)} 62%{transform:scale(1.18) rotate(-1deg)} 66%,100%{transform:scale(1)} }
+  /* ══ 6 极简双行 ══ */
+  .v6 .col { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .v6 .top { color:#b7b2a8; font-size:22px; font-weight:500; letter-spacing:2px; }
+  .v6 .big { color:#fff; font-size:50px; font-weight:900; text-shadow:0 2px 10px rgba(0,0,0,.85); position:relative; }
+  .v6 .big::after { content:""; position:absolute; left:0; bottom:-6px; height:5px; width:100%; background:#F2C14E; border-radius:3px; transform:scaleX(0); transform-origin:left; animation: v6line 5s ease infinite; }
+  @keyframes v6line { 0%,10%{transform:scaleX(0)} 40%{transform:scaleX(1)} 94%{transform:scaleX(1)} 100%{transform:scaleX(0)} }
+  /* ══ 7 霓虹描边 ══ */
+  .v7 .ch { color:#fff; font-size:44px; font-weight:800; animation: v7glow 5s ease infinite; }
+  .v7 .kw { color:#F2C14E; }
+  @keyframes v7glow { 0%,100%{ text-shadow:0 0 6px rgba(255,255,255,.25),0 2px 4px rgba(0,0,0,.9) } 10%,90%{ text-shadow:0 0 14px rgba(242,193,78,.55),0 0 30px rgba(242,193,78,.25),0 2px 4px rgba(0,0,0,.9) } }
+  .note { grid-column:1/-1; color:#666; font-size:13px; margin-top:4px; }
+</style>
+</head>
+<body>
+<h1>字幕效果候选 · 同一条文案「高蛋白饮食很可能正在抹杀你的建模」</h1>
+<div class="tip">每款 5 秒循环 · 背景为成片真实画面 · 金色 = 重点字处理 · 挑中告诉我编号即可全片替换</div>
+<div class="grid">
+
+<div class="card"><span class="tag">1 现役·逐字卡拉OK（对照）</span><div class="stage"><div class="sub v1"><div>
+<span class="ch">高蛋白饮食很可能正在</span><span class="ch kw">抹杀</span><span class="ch">你的</span><span class="ch kw">建模</span>
+</div></div></div></div>
+
+<div class="card"><span class="tag">2 卡拉OK＋高光扫过</span><div class="stage"><div class="sub v2"><div style="position:relative">
+<span class="ch">高蛋白饮食很可能正在</span><span class="ch kw">抹杀</span><span class="ch">你的</span><span class="ch kw">建模</span><span class="sweep"></span>
+</div></div></div></div>
+
+<div class="card"><span class="tag">3 弹跳逐字（每个字蹦出来）</span><div class="stage"><div class="sub v3"><div>
+<span class="ch" style="animation-delay:.0s">高</span><span class="ch" style="animation-delay:.2s">蛋</span><span class="ch" style="animation-delay:.4s">白</span><span class="ch" style="animation-delay:.6s">饮</span><span class="ch" style="animation-delay:.8s">食</span><span class="ch" style="animation-delay:1.0s">很</span><span class="ch" style="animation-delay:1.2s">可</span><span class="ch" style="animation-delay:1.4s">能</span><span class="ch" style="animation-delay:1.6s">正</span><span class="ch" style="animation-delay:1.8s">在</span><span class="ch kw" style="animation-delay:2.1s">抹</span><span class="ch kw" style="animation-delay:2.4s">杀</span><span class="ch" style="animation-delay:2.7s">你</span><span class="ch" style="animation-delay:2.9s">的</span><span class="ch kw" style="animation-delay:3.1s">建</span><span class="ch kw" style="animation-delay:3.4s">模</span>
+</div></div></div></div>
+
+<div class="card"><span class="tag">4 黑底圆角条＋卡拉OK</span><div class="stage"><div class="sub v4"><div class="bar">
+<span class="ch">高蛋白饮食很可能正在</span><span class="ch kw">抹杀</span><span class="ch">你的</span><span class="ch kw">建模</span>
+</div></div></div></div>
+
+<div class="card"><span class="tag">5 大字报·重点字砸击抖动</span><div class="stage"><div class="sub v5"><div>
+<span class="ch">高蛋白饮食很可能正在</span><span class="kw">抹杀</span><span class="ch">你的</span><span class="kw">建模</span>
+</div></div></div></div>
+
+<div class="card"><span class="tag">6 极简双行·金线扫出</span><div class="stage"><div class="sub v6"><div class="col">
+<div class="top">高蛋白饮食很可能正在抹杀你的</div><div class="big">建模</div>
+</div></div></div></div>
+
+<div class="card"><span class="tag">7 霓虹微光（进字时呼吸发光）</span><div class="stage"><div class="sub v7"><div>
+<span class="ch">高蛋白饮食很可能正在</span><span class="ch kw">抹杀</span><span class="ch">你的</span><span class="ch kw">建模</span>
+</div></div></div></div>
+
+<div class="note">说明：1 为当前成片效果作对照；2/3/7 可与现有逐字卡拉OK时间轴直接兼容（逐字驱动不变，只换皮肤）；4 换容器；5/6 改版式（重点字单独放大）。选中后我按该样式重渲全片，逐字时间轴、重点字时刻全部保留。</div>
+</div>
+</body>
+</html>

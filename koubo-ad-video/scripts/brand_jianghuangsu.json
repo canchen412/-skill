@@ -1,0 +1,47 @@
+{
+ "brand": "VORSE",
+ "product": "姜黄素",
+ "norm_map": {
+  "VORSE": "沃斯",
+  "SGS权威检测": "国际权威检测",
+  "SGS": "国际"
+ },
+ "workspace": "/Users/mac/WorkBuddy/2026-10-08-16-41-58/vorse_turmeric_redo",
+ "shots": [
+  "gen2/shot01.jpg",
+  "gen2/shot02.jpg",
+  "gen2/shot03.jpg",
+  "gen2/shot04.jpg",
+  "gen2/shot05.jpg",
+  "gen2/shot06.jpg",
+  "gen2/shot07.jpg",
+  "gen2/shot08.jpg",
+  "gen2/shot09.jpg",
+  "gen2/shot10.jpg",
+  "gen2/shot11.jpg",
+  "gen2/shot12.jpg",
+  "gen2/shot13.jpg",
+  "gen2/shot14.jpg",
+  "gen2/shot15.jpg",
+  "gen2/shot16.jpg",
+  "gen2/shot17.jpg",
+  "gen2/shot18.jpg"
+ ],
+ "motions": {
+  "wide": "pan_left",
+  "mid": "zoom_in",
+  "clos": "zoom_in"
+ },
+ "ref_audio": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/voice/speaker_24k.wav",
+ "ref_text": "诺特兰德大品牌，这款一瓶才个位数，性价比直接拉满。里面还有多种必足维生素，很多兄弟平时蔬菜水果吃得少，维C、维E也都给你搭配好了。新款还升级添加雨生红球藻与葡萄籽。",
+ "sfx_scroll": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/sfx_banner/卷播滚动_突然加速到暂停_原版.mp3",
+ "sfx_dong": "/Users/mac/WorkBuddy/2026-10-05-09-33-49/jisuan_alan_video_261006/gen/定格咚_B_trim.mp3",
+ "cover": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/cover/default_cover_3x4.jpg",
+ "sub_size": 78,
+ "fx": {
+  "enabled": true
+ },
+ "cards_dir": "cards_green",
+ "sfx_scroll_as_is": true,
+ "sfx_scroll_gain": 1.05
+}
