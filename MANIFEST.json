@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "generated_at": "2026-10-26T14:05:22+00:00",
+  "generated_at": "2026-10-28T02:11:55+00:00",
   "source_root": "/Users/mac/wb-skills",
   "skill_count": 1,
-  "total_files": 234,
-  "total_bytes": 15932497,
+  "total_files": 235,
+  "total_bytes": 15939571,
   "skills": {
     "koubo-ad-video": {
       "files": 223,
