@@ -1560,7 +1560,17 @@ def main():
         for k in range(1, nseg):
             _cum += timeline[k - 1]["cut_end"] - timeline[k - 1]["start"]
             _kind = str(_plan[k - 1])
-            if _kind.startswith("push"):
+            if _kind in ("cut", "none", "hard"):
+                # ★2026-10-28 纯净硬切（拆镜专用）：B 直接顶上来，不做位移、**不打亮度脉冲**。
+                #   背景：push 转场会给切点加一记 0.40 提亮 + 0.22s 位移，而字幕是烧进画面的，
+                #   转场期间旧字幕被推出、新字幕还没推入 ⇒ 字幕带空一截再冒出来。切点一密
+                #   （拆镜后每 1~1.5s 一个）就成了灿爹说的「字幕一闪一闪」。
+                #   同一句内部拆出来的子镜之间就该用硬切：换图不换句，字幕瞬间替换、零空窗。
+                #   enable 必须比 tpad 起点早 0.10s（见下方 flash 分支的实测边界）。
+                fc.append(f"[{_acc}][{_labs[k]}]overlay=x=0:y=0:eval=frame:"
+                          f"enable='gte(t,{_cum - 0.10:.3f})'[mx{k}]")
+                # 刻意不 append CUT_KIND ⇒ 这个切点没有提亮脉冲
+            elif _kind.startswith("push"):
                 _axis = _kind.split("_", 1)[1]
                 # p: 1 → 0 在 [c-T, c] 上线性推进（c 之后夹到 0 = 完全就位）
                 _p = f"max(0,min(1,({_cum:.3f}-t)/{XF_T:.3f}))"

@@ -43,5 +43,17 @@
  },
  "cards_dir": "cards_green",
  "sfx_scroll_as_is": true,
- "sfx_scroll_gain": 1.05
+ "sfx_scroll_gain": 1.05,
+ "opening_punch": false,
+ "opening_punch_sfx": false,
+ "hero_label": "姜黄素",
+ "hero_label_top": 40,
+ "hero_label_size": 150,
+ "banner_click_lead": 1.10,
+ "transition": {
+  "dur": 0.28,
+  "mode": "mix",
+  "cuts": ["flash", "push_left", "push_up", "push_left", "flash",
+           "push_up", "push_left", "push_left", "flash"]
+ }
 }

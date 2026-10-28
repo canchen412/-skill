@@ -1,0 +1,66 @@
+{
+ "brand": "麦小饱",
+ "product": "鸡肉肠",
+ "norm_map": {},
+ "workspace": "/Users/mac/WorkBuddy/2026-10-27-10-55-32/maixiaobao_video",
+ "shots": [
+  "shots/s02b.png",
+  "shots/s03.jpg",
+  "shots/s04.jpg",
+  "ai_shots/shot_E_stage.png",
+  "ai_shots/shot_C_cliff.png",
+  "ai_shots/shot_B_ice.png",
+  "ai_shots/shot_A_fire.png",
+  "ai_shots/shot_D_tear.png",
+  "shots/s10.png",
+  "shots/s11.png"
+ ],
+ "motions": {
+  "wide": "pan_left",
+  "mid": "zoom_in",
+  "clos": "zoom_in"
+ },
+ "ref_audio": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/voice/speaker_24k.wav",
+ "ref_text": "诺特兰德大品牌，这款一瓶才个位数，性价比直接拉满。里面还有多种必足维生素，很多兄弟平时蔬菜水果吃得少，维C、维E也都给你搭配好了。",
+ "sfx_scroll": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/sfx_banner/卷播滚动_突然加速到暂停_原版.mp3",
+ "sfx_dong": "/Users/mac/WorkBuddy/2026-10-05-09-33-49/jisuan_alan_video_261006/gen/定格咚_B_trim.mp3",
+ "cover": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/cover/default_cover_3x4.jpg",
+ "sub_size": 78,
+ "sub_style": "cinema",
+ "fx": {
+  "enabled": false
+ },
+ "cards_dir": "cards_green",
+ "sfx_scroll_as_is": true,
+ "sfx_scroll_gain": 1.05,
+ "opening_punch": false,
+ "opening_punch_sfx": false,
+ "hero_label": "鸡肉肠",
+ "hero_label_top": 4,
+ "hero_label_size": 155,
+ "banner_click_lead": 1.1,
+ "transition": {
+  "dur": 0.28,
+  "mode": "mix",
+  "cuts": [
+   "push_left",
+   "push_up",
+   "flash",
+   "push_left",
+   "push_up",
+   "push_left",
+   "flash",
+   "push_up",
+   "push_left",
+   "flash"
+  ]
+ },
+ "banner_click_at": 1.72,
+ "banner_cut_tail": 0.4,
+ "card_src_ok_prefixes": [
+  "/Users/mac/WorkBuddy/2026-10-27-10-55-32/maixiaobao_video/cards_src/"
+ ],
+ "banner_sub_skip": [
+  "鸡肉肠"
+ ]
+}

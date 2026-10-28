@@ -122,6 +122,78 @@ def cut_phrases(text, min_len=6):
     return split_long(out)
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# ★拆镜（2026-10-28 灿爹：「分镜太长了，长一点的都多加图片，做成两个到三个分镜」）
+#   做法：**配音文本一个字不动**（TTS 句数、整段 vo、每个字的发声时刻全不变），
+#   只把「画面/字幕句」按标点再切细。原理——build_ad_video 的镜头时间轴是按
+#   tokens 的全局字符流贪心切出来的，只要拆出的子句拼回去逐字相同，总时长与
+#   每个字的时间点就一律不漂，连 TTS 都不用重跑（重跑会在新句间插停顿把片子拉长）。
+#   侧车约定：文案同名 .split.json → {"parts": {"2": ["子句A", "子句B"], ...}}
+#   key = 语音句序号（1 基，对应 phrases.txt 的第几行）。
+# ══════════════════════════════════════════════════════════════════════════
+def _pchars(t):
+    """与 build_ad_video.pchars() 同一口径：去掉标点与空白后的有效发音字。"""
+    return [c for c in t
+            if c not in "，。！？、：；—…·～「」『』《》\"'（）()" and not c.isspace()]
+
+
+def load_split_map(text_path):
+    p = os.path.splitext(text_path)[0] + ".split.json"
+    if not os.path.exists(p):
+        return {}, None
+    try:
+        j = json.load(open(p, encoding="utf-8"))
+    except Exception as e:
+        raise RuntimeError(f"拆镜侧车读不了 {p}: {e}")
+    parts = (j.get("parts") if isinstance(j, dict) else None) or {}
+    return {str(k): [x for x in v if str(x).strip()]
+            for k, v in parts.items() if isinstance(v, list)}, p
+
+
+def expand_phrases(phrases, split_map, src=""):
+    """语音句 → 画面句。硬校验：拆出的子句去标点后必须与原句逐字相等，
+    否则字符贪心对齐整体漂移（字幕和画面全错位，质检还查不出来）。"""
+    out = []
+    for i, p in enumerate(phrases, 1):
+        parts = split_map.get(str(i))
+        if not parts:
+            out.append(p)
+            continue
+        joined = "".join(str(x).strip() for x in parts)
+        if _pchars(joined) != _pchars(p):
+            raise RuntimeError(
+                f"拆镜第 {i} 句拼接不一致（{src}）：\n"
+                f"  原句：{p}\n  拼接：{joined}\n"
+                f"  有效字：{len(_pchars(p))} vs {len(_pchars(joined))}"
+                f"（必须逐字相同，只允许标点差异）")
+        out.extend(str(x).strip() for x in parts)
+    return out
+
+
+def rebuild_bounds(tokens_path, rphrases, out_path):
+    """按画面句重切镜界：拿 tokens 的逐字时刻按字数累加，与 build_ad_video 同口径，
+    保证 fx 的镜级作用域、动效压缩边界与画面切点严丝合缝。"""
+    w = json.load(open(tokens_path, encoding="utf-8"))
+    chars = []
+    for seg in w["transcription"]:
+        s, e = seg["offsets"]["from"] / 1000, seg["offsets"]["to"] / 1000
+        txt = seg["text"].strip()
+        nn = len(txt)
+        for k, c in enumerate(txt):
+            chars.append((s + (e - s) * k / nn, s + (e - s) * (k + 1) / nn, c))
+    bounds, ci = [], 0
+    for p in rphrases:
+        need = len(_pchars(p))
+        if ci + need > len(chars):
+            raise RuntimeError(f"拆镜后字数超出 token 流（{ci}+{need} > {len(chars)}）")
+        bounds.append([round(chars[ci][0], 3), round(chars[ci + need - 1][1], 3)])
+        ci += need
+    if ci != len(chars):
+        raise RuntimeError(f"拆镜后总字数 {ci} ≠ token 字数 {len(chars)}，配音会漂")
+    json.dump(bounds, open(out_path, "w"))
+    return bounds
+
+
 def banner_mix(S, base_video, dur, scroll_end, click_at, out_wav, sfx_scroll, sfx_dong, sfx_as_is=False, sfx_gain=0.72):
     """★卷播混音同源定式：底片音轨前段为基底 + 滚动音0.45 + 咚0.40，峰值限0.92
     sfx_as_is=True（2026-10-09 灿爹拍板）：滚动音原样铺、不重采样伸缩——
@@ -367,11 +439,18 @@ def main():
 
     # ── 1. 切镜 ──
     print("══ 1/7 切镜", flush=True)
-    phrases = cut_phrases(text)
-    n = len(phrases)
+    phrases = cut_phrases(text)              # 语音句：TTS 按它合成，句数决定句间停顿
+    n_voice = len(phrases)
+    # ★拆镜（2026-10-28）：语音句一句不动，画面句按侧车再切细 —— 配音整段复用，
+    #   时长与逐字时刻不漂，纯粹把「一张图挂 4 秒」变成「2-3 张图各挂 1-2 秒」。
+    split_map, _splitf = load_split_map(a.text)
+    rphrases = expand_phrases(phrases, split_map, a.text) if split_map else phrases
+    n = len(rphrases)                        # 画面镜数（后续镜数逻辑一律用它）
+    # TTS 阶段 phrases.txt 必须是语音句（云端合成文本 = 逐行拼接，字数闸也认它）
     open(f"{S}/phrases.txt", "w").write("\n".join(phrases) + "\n")
-    print(f"  {n} 镜", flush=True)
-    for i, p in enumerate(phrases, 1):
+    print(f"  {n} 镜" + (f"（{n_voice} 句拆成 {n} 镜 ← {os.path.basename(_splitf)}）"
+                        if n != n_voice else ""), flush=True)
+    for i, p in enumerate(rphrases, 1):
         print(f"   镜{i:02d} {len(PUNCT.sub('', p))}字  {p[:20]}", flush=True)
 
     shots = C["shots"]
@@ -472,7 +551,8 @@ def main():
     else:
         tts_local_f5(S, phrases, _must, poly_map, C)
     durs = json.load(open(f"{S}/audio/durations.json", encoding="utf-8"))["sentences"]
-    assert len(durs) == n, f"配音句数 {len(durs)} ≠ 镜数 {n}"
+    # ★拆镜后 n 是画面镜数（可能 > 语音句数）：配音只跟语音句对齐，这里必须比 n_voice
+    assert len(durs) == n_voice, f"配音句数 {len(durs)} ≠ 语音句数 {n_voice}"
     # ★轮播覆盖范围：有定场句 → 盖到定场句尾（含）；无 → 默认盖第一句
     banner_k = next((i for i, p in enumerate(phrases) if BANNER_MARK in p), 0)
     hook_dur = durs[banner_k]["end"]
@@ -486,11 +566,18 @@ def main():
     # ── 3. 3D 卷播 ──
     if not a.skip_banner:
         print("══ 3/7 3D 卷播", flush=True)
-        cut = round(hook_dur + 0.40, 2)          # ★切点=轮播覆盖段句尾+0.40（语音缝内）
-        # ★2026-10-18：点击提前量可配（短钩子时把点击提前，给「重点字」留出定格时间）
+        # ★切点=轮播覆盖段句尾 + 尾巴（默认 0.40，语音缝内）
+        cut = round(hook_dur + float(C.get("banner_cut_tail", 0.40)), 2)
+        # ★2026-10-27：主图定格时刻可直接配 banner_click_at（绝对秒）——
+        #   定场句里的产品名念到哪，主图就得在哪弹出来。走「切点-提前量」反推时，
+        #   句短了会推出「主图比产品名晚两秒才出现」的节奏错误（麦小饱鸡肉肠实锤）。
+        #   不配则退回旧行为：cut - banner_click_lead。
         _click_lead = float(C.get("banner_click_lead", 0.95))
-        click_at = round(cut - _click_lead, 2)          # clickAt+zoomDur(0.55) ≤ CUT-0.40
-        scroll_end = round(click_at - 0.40, 2)
+        if C.get("banner_click_at") is not None:
+            click_at = round(float(C["banner_click_at"]), 2)
+        else:
+            click_at = round(cut - _click_lead, 2)      # clickAt+zoomDur(0.55) ≤ CUT-0.40
+        scroll_end = round(max(0.30, click_at - 0.40), 2)
         # ★2026-10-09 灿爹拍板：轮播长短跟文案/配音走 → 卡数按滚动时长扩
         #   （约 0.45s/张的滚动节奏，池子不够就封顶；生成端同步替换 M.nScroll）
         _pool = sorted(glob.glob(f"{W}/rem3d/public/{C.get('cards_dir', 'cards_d')}/c*.jpg"))
@@ -584,6 +671,18 @@ def main():
     else:
         sh([PY, f"{SKILL}/scripts/mk_tokens_f5.py", "--durations", f"{S}/audio/durations.json",
             "--phrases", f"{S}/phrases.txt", "--out-dir", f"{S}/audio"])
+
+    # ── ★拆镜落地（2026-10-28）──
+    #   必须等 token 时间轴落盘之后再换：上面两步（云端/本地）都要求 phrases.txt 是
+    #   **语音句**。这里才把画面句换成拆细版、重写 phrases.txt 并按新镜界重算
+    #   shot_bounds.json；配音与 vo_mapped_v2.json 一个字都不动，所以时长不变。
+    if n != n_voice:
+        open(f"{S}/phrases.txt", "w").write("\n".join(rphrases) + "\n")
+        _nb = rebuild_bounds(f"{S}/audio/vo_mapped_v2.json", rphrases,
+                             f"{S}/audio/shot_bounds.json")
+        print(f"  拆镜：{n_voice} 句 → {n} 镜（配音不动），镜界已重算，"
+              f"末镜结束 {_nb[-1][1]:.2f}s", flush=True)
+        phrases = rphrases
 
     # ── 5. 底片渲染 ──
     print("══ 5/7 底片渲染", flush=True)
@@ -731,6 +830,8 @@ def main():
            "card_src_ok": kwx.get("card_src_ok", []),
            "card_src_ok_prefixes": kwx.get("card_src_ok_prefixes", []),
            "card_min_sec": kwx.get("card_min_sec", 2.0),
+           # ★2026-10-27：轮播段字幕跳词（主图大字已占位时，底部别再打同一个产品名）
+           "banner_sub_skip": (C.get("banner_sub_skip") or kwx.get("banner_sub_skip") or []),
            "trigger_sfx": kwx.get("trigger_sfx", []),
            # ★2026-10-13：sfx_files 侧车透传（叙事音效 narr_* 按绝对路径临时注册，
            #   与 vorse s2/s3 定式一致；不给则维持空 dict，老路不受影响）
@@ -746,6 +847,13 @@ def main():
            #   侧车 .kw.json 或 config 可写死 style id 复现；sub_karaoke 只在显式配置时透传，
            #   不再强制 False（否则随机默认永远进不来）
            "sub_style": kwx.get("sub_style", C.get("sub_style", "random")),
+           # ★2026-10-27 补白名单（上次漏了 ⇒ 写了也不生效）：
+           #   sweep 款每字唱完闪白 90ms，25 字句=25 次闪，灿爹点名「字幕一闪一闪」；
+           #   karaoke_unfilled 默认 &H00ACC4CF 与米纸底同色，未唱字看不见=字凭空冒出。
+           #   这两项必须能透传，否则只能改代码。
+           **({k: kwx.get(k, C[k]) for k in
+               ("karaoke_unfilled", "karaoke_filled", "karaoke_bg")
+               if k in C or k in kwx}),
            # ★2026-10-13：bgm 透传（#231④ BGM 锁定——不透传则 build 曲池随机换曲，
            #   重渲同一条片 BGM 变味的根因；config 顶层或 .kw.json 侧车写绝对路径）
            # ★2026-10-14：未显式指定时**不写该键**（写 "" 会被判成关闭，见上方注释）
@@ -1054,12 +1162,23 @@ registerRoot(() => (
         if os.path.exists(f"{S}/subs.ass"):
             _fd = f":fontsdir={SKILL}/assets/fonts" if os.path.isdir(f"{SKILL}/assets/fonts") else ""
             _keep = []
+            # ★2026-10-27：轮播段字幕可按词跳过。主图三层字效已经把产品名做成大标题，
+            #   底部字幕再打一遍同一个词 = 同屏两个「鸡肉肠」，抢焦点。
+            #   config 写 banner_sub_skip: ["鸡肉肠"] 即可（缺省空 = 旧行为不变）。
+            _skip_sub = [str(x) for x in (C.get("banner_sub_skip") or []) if str(x)]
             for _ln in open(f"{S}/subs.ass", encoding="utf-8").read().splitlines():
                 if _ln.startswith("Dialogue:"):
                     _p = _ln.split(",", 9)
                     try:
                         _h, _m, _sec = _p[1].split(":")
                         if int(_h) * 3600 + float(_m) * 60 + float(_sec) < cut + 0.05:
+                            _txt = _p[9] if len(_p) > 9 else _ln
+                            # 逐字 karaoke 会把词拆成「{\k13}鸡{\k13}肉{\k13}肠」，
+                            # 必须先剥掉 {\...} 标签再做子串比对，否则永远匹配不上
+                            _plain = re.sub(r"\{[^}]*\}", "", _txt)
+                            if _skip_sub and any(_sv in _plain for _sv in _skip_sub):
+                                print(f"  轮播字幕跳过（主图大字已占位）：{_plain}", flush=True)
+                                continue
                             _keep.append(_ln)
                     except (ValueError, IndexError):
                         pass
