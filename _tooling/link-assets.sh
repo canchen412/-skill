@@ -84,7 +84,7 @@ else
     say "     Finder → 前往 → 连接服务器 → smb://<主号IP>"
     say "     或用命令行挂载："
     say "       mkdir -p ~/mnt/advideo"
-    say "       mount_smbfs //guest@192.168.1.103/$SHARE_NAME ~/mnt/advideo"
+    say "       mount_smbfs //guest@<主号IP>/$SHARE_NAME ~/mnt/advideo"
     say "     挂好之后重跑本脚本。"
     die "缺素材源"
   fi

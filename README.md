@@ -45,7 +45,7 @@ bash _tooling/sync-up.sh "加个新技能" --add 技能名
 # ① 拉取
 git clone https://github.com/canchen412/-skill.git ~/wb-skills
 
-# ② 连主号的素材盘：Finder → 前往 → 连接服务器 → smb://192.168.1.103 → 广告视频
+# ② 连主号的素材盘：Finder → 前往 → 连接服务器 → smb://<主号局域网IP> → 广告视频
 #    挂载后是 /Volumes/广告视频
 
 # ③ 路径对齐（关键！让技能里的 /Volumes/陈灿会展/广告视频/... 生效）
@@ -70,7 +70,7 @@ cd ~/wb-skills && bash _tooling/pull.sh && echo "记得重启 WorkBuddy"
 
 ## ⚠️ 两台机器的差异（已知）
 
-| 项 | 主号 `mac`（Mac mini 192.168.1.103） | 小号 `apple` |
+| 项 | 主号 `mac`（Mac mini，局域网 IP 见本机 `~/.wb-net.conf` / 路由器后台） | 小号 `apple` |
 |---|---|---|
 | 素材盘 | 外接 exFAT「陈灿会展」→ `/Volumes/陈灿会展` | 走 SMB，挂载为 `/Volumes/广告视频` |
 | 路径修正 | 无需 | `link-assets.sh` 建软链补齐「陈灿会展」这一层 |
@@ -81,7 +81,7 @@ cd ~/wb-skills && bash _tooling/pull.sh && echo "记得重启 WorkBuddy"
 
 - **素材盘依赖主号开机 + 同网**。主号关机 → 小号 SMB 断线 → 软链悬空。
 - **exFAT 无并发保护**。共享可读写，两台同时写 `广告视频/` 有覆盖风险 → 约定只主号写素材。
-- **字体 `.otf/.ttf` 已入库**（约 5MB，渲染必需）。若仓库转为 Public 必须先删除，商用字体授权不允许公开分发。
+- **字体 `.otf/.ttf` 已入库**（约 5MB，渲染必需）。实测确认为 Adobe **思源黑体 / 思源宋体**（Source Han Sans / Serif），`SIL Open Font License 1.1` 授权，**允许自由分发、商用与再分发**，公开仓库无授权风险（2026-10-28 核实并更正此前「商用字体不允许公开」的误判）。唯一要求：保留字体内版权声明、不得单独售卖字体本体。
 - `.wav` 原始 BGM 未入库（`.m4a` 已保留）；`STHeiti Medium.ttc` 53MB 未入库。
 
 ## 工具
