@@ -1,15 +1,20 @@
 {
   "schema": 1,
-  "generated_at": "2026-10-29T04:31:07+00:00",
+  "generated_at": "2026-10-29T04:36:17+00:00",
   "source_root": "/Users/mac/wb-skills",
-  "skill_count": 1,
-  "total_files": 248,
-  "total_bytes": 16132786,
+  "skill_count": 2,
+  "total_files": 257,
+  "total_bytes": 16241822,
   "skills": {
+    "cloud-tts": {
+      "files": 9,
+      "bytes": 105345,
+      "sha": "f064b886373214d2"
+    },
     "koubo-ad-video": {
       "files": 236,
-      "bytes": 16072667,
-      "sha": "e408aa675d3d0e1e"
+      "bytes": 16076358,
+      "sha": "c94c301cd897cb95"
     }
   }
 }

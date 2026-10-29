@@ -569,6 +569,10 @@ def main():
         _must.append(C["product"])
     _must = [str(m) for m in _must if m and len(str(m)) >= 2]
 
+    # ★2026-10-29 修：`_tts_mode` 只在「真合成」分支里赋值，`--skip-tts` 复用配音时
+    #   走到下面的停顿修补判断就是 UnboundLocalError（本轮三条重渲全部 exit=1 就是它）。
+    #   缺省 "skip" = 既然没合成，也就不存在「整段合成要不要补停顿」的问题。
+    _tts_mode = "skip"
     if a.skip_tts and os.path.exists(f"{S}/audio/durations.json"):
         print("  (复用已有配音)", flush=True)
     elif engine == "cloud":
@@ -1341,6 +1345,30 @@ registerRoot(() => (
         os.replace(_dout, f"{S}/render/final.mp4")
         _dmb = os.path.getsize(f"{S}/render/final.mp4") / 1048576
         print(f"  漂浮粒子 ✓（{C.get('dust_count', 88)} 颗，{_dmb:.1f} MB）", flush=True)
+
+    # ── 6.9 ★音视频流时长必须对齐（2026-10-29 血证）──
+    #   `transition.cuts` 里写 "cut"（转场时长 0）时，xfade 链会被截断：
+    #   ffprobe 的 **format.duration 仍报 30.1s**（取的是音频），而**视频流只有 19.47s**，
+    #   成片后半段直接没了，qc_all 的「时长」检查也查不出来（它读 format duration）。
+    #   所以这里逐流比对，视频流比音频流短 0.2s 以上就判失败、不许交付。
+    _v = subprocess.run([FP, "-v", "error", "-select_streams", "v:0",
+                         "-show_entries", "stream=duration", "-of", "csv=p=0",
+                         f"{S}/render/final.mp4"], capture_output=True, text=True)
+    _a = subprocess.run([FP, "-v", "error", "-select_streams", "a:0",
+                         "-show_entries", "stream=duration", "-of", "csv=p=0",
+                         f"{S}/render/final.mp4"], capture_output=True, text=True)
+    def _fd(x):
+        try:
+            return float((x.stdout or "").strip().splitlines()[0])
+        except Exception:
+            return 0.0
+    _dv, _da = _fd(_v), _fd(_a)
+    print(f"  流时长 视频 {_dv:.2f}s / 音频 {_da:.2f}s", flush=True)
+    if _dv and _da and _da - _dv > 0.2:
+        raise RuntimeError(
+            f"视频流被截断：视频 {_dv:.2f}s < 音频 {_da:.2f}s（差 {_da-_dv:.2f}s）。"
+            "常见原因＝transition.cuts 里写了 'cut'（0 时长转场会把 xfade 链截断），"
+            "改成 'hblur' 等非零时长手法后重渲。")
 
     # ── 7. 质检 ──
     print("══ 7/7 质检", flush=True)
