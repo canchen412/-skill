@@ -38,6 +38,9 @@
  "sfx_dong": "/Users/mac/WorkBuddy/2026-10-05-09-33-49/jisuan_alan_video_261006/gen/定格咚_B_trim.mp3",
  "cover": "/Users/mac/.workbuddy/skills/koubo-ad-video/assets/cover/default_cover_3x4.jpg",
  "sub_size": 78,
+ "sub_style": "karaoke",
+ "karaoke_unfilled": "&H00777777",
+ "karaoke_filled": "&H001A1A1A",
  "fx": {
   "enabled": true
  },
@@ -51,9 +54,14 @@
  "hero_label_size": 150,
  "banner_click_lead": 1.10,
  "transition": {
-  "dur": 0.28,
-  "mode": "mix",
-  "cuts": ["flash", "push_left", "push_up", "push_left", "flash",
-           "push_up", "push_left", "push_left", "flash"]
+  "dur": 0.34,
+  "mode": "fx",
+  "fxLead": 0.6,
+  "cuts": ["hblur", "radial", "driftup", "hblur", "hblur",
+           "hlslice", "pixelize", "blurdissolve", "hblur",
+           "fadeblack",
+           "wipeleft", "hblur", "fadewhite",
+           "circleopen", "hblur", "vertopen", "diagtl", "zoomout",
+           "fadegrays"]
  }
 }

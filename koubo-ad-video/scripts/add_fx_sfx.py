@@ -74,7 +74,10 @@ RULES = {
     # ── 重点字弹出：短促吸附 ──
     "kw": {"sfx": "kw_pop", "db": -9.0, "fade": 0.03},
     # ── 详情卡滑入：轻「啪」一声，确认它到位 ──
-    "card": {"sfx": "kw_snap", "db": -15.0, "fade": 0.03},
+    #   ★2026-10-28 实测：原本 -15dB 混进成片后事件窗 Δ 仅 -0.07dB（等于没有）——
+    #     卡片恰好人声满格在说话（"诺特是大牌子"），轻声被彻底吃掉。提到 -8dB
+    #     后与「重点字 -9dB」同量级，短促一下不抢词，但耳朵能确认卡片到位。
+    "card": {"sfx": "kw_snap", "db": -5.0, "fade": 0.03},
     # ── 价格卡（CTA）：与落定同音色（隔 7s 形成呼应），略低一档 ──
     "card_price": {"sfx": "kw_ding", "db": -10.0, "fade": 0.08},
     # ── 卷播大字滑入：轻，卷播段本身已很满 ──
@@ -163,6 +166,15 @@ def collect_events(spec, config, durations):
         is_price = any(k in name for k in ("价格", "price", "价签"))
         ev.append((t0, "card_price" if is_price else "card", f"卡片 {name}"))
 
+    # ③b 动效层详情卡（fx_spec.cards，2026-10-28 新增）
+    #     ProductCardFx 的 spring 是 damping11/stiffness170/mass0.9，实测约 0.22s 落定，
+    #     「啪」要压在那一下上，早于它就是空放、晚于它就错拍。
+    for c in spec.get("cards") or []:
+        name = os.path.basename(str(c.get("src", "")))
+        is_price = any(k in name for k in ("价格", "price", "价签"))
+        ev.append((float(c.get("startSec", 0)) + 0.22,
+                   "card_price" if is_price else "card", f"详情卡 {name}"))
+
     # ④ 卷播大字滑入（clickAt + 0.12s，与 SlideLabel 的 local 起滑一致）
     bl = config.get("banner_label") or {}
     if bl.get("enabled"):
@@ -235,6 +247,9 @@ def main():
     ap.add_argument("--total", type=float, default=0, help="总时长，缺省取视频时长")
     ap.add_argument("--in", dest="src_video", default="", help="要混入的视频")
     ap.add_argument("--out-mp4", default="")
+    # ★2026-10-28：音效轨已自动补偿到峰值 -3dBFS，这里只做「还想更响/更轻」的手调
+    ap.add_argument("--sfx-gain", type=float, default=0.0,
+                    help="音效整体额外增益 dB（正=更响；自动补偿之后叠加，默认 0）")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--emit-config", default="",
                     help="导出 {sfx_at, sfx_volume} 补丁 json，喂给 build_ad_video 一次成型")
@@ -288,12 +303,31 @@ def main():
         print(f"\n✅ 音效轨 {out}  （峰值 {pk:.3f}，{wav_dur(out):.2f}s）")
 
         if a.src_video and a.out_mp4:
+            # ★2026-10-28 修「音效进了成片但听不见」：
+            #   各音色源（kw_pop / kw_snap / kw_ding…）自身电平参差，实测峰值只有
+            #   -18~-25 dBFS；再按 -9dB / -5dB 衰减后落到 -27dB 以下，比人声(-13dB RMS)
+            #   低 15dB 以上 ⇒ 音轨里确实有、耳朵里没有（差值法测 Δ 仅 +0.06dB）。
+            #   这里先按**目标响度**算一个补偿增益（默认抬到峰值 -3dBFS），再叠用户给的
+            #   --sfx-gain 微调。不改各事件的相对强弱关系，只把整轨抬到听得见的量级。
+            _g = float(getattr(a, "sfx_gain", 0.0) or 0.0)
+            _pk = max(pk, 1e-6)
+            _auto = max(0.0, 20 * np.log10(0.70 / _pk)) if _pk < 0.70 else 0.0
+            _tg = _auto + _g
+            _vol = f"volume={_tg:.2f}dB," if abs(_tg) > 0.05 else ""
+            if abs(_tg) > 0.05:
+                print(f"   音效补偿增益 {_tg:+.1f}dB"
+                      f"（原峰 {20 * np.log10(_pk):.1f}dBFS → 目标 -3.1dBFS"
+                      + (f"，叠加手调 {_g:+.1f}dB" if abs(_g) > 0.05 else "") + "）")
             sh([FF, "-y", "-v", "error", "-i", a.src_video, "-i", out,
                 "-filter_complex",
                 # 人声主导：音效轨已按 dB 控好，amix normalize=0 保持原始电平，
                 # 出口再软限幅防削波（人声 -13 LUFS 与音效叠加余量足够）
-                f"[0:a][1:a]amix=inputs=2:normalize=0:duration=first,"
-                f"alimiter=limit=0.92:attack=5:release=60:level=disabled[a]",
+                f"[1:a]{_vol}asetpts=PTS-STARTPTS[sx];"
+                f"[0:a][sx]amix=inputs=2:normalize=0:duration=first,"
+                # ★latency=1 必须写：alimiter 是 look-ahead 限幅器，默认会**整条音频
+                #   延后 attack 时长**（实测 attack=5 ⇒ 晚 238 采样 ≈ 4.96ms）。
+                #   画面不会跟着延，于是口型/字幕与声音错开。latency=1 让它自己扣回。
+                f"alimiter=limit=0.92:attack=5:release=60:level=disabled:latency=1[a]",
                 "-map", "0:v", "-map", "[a]",
                 "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
                 "-movflags", "+faststart", a.out_mp4])

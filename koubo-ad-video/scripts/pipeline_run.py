@@ -46,6 +46,9 @@ NODE = "/Users/mac/.workbuddy/binaries/node/versions/22.22.2-6/bin/npx"
 # ★2026-10-16：云端配音（统一挂 cloud-tts 技能，脚本单一来源，别再拷一份进来）
 CLOUD_SCRIPTS = os.path.expanduser("~/.workbuddy/skills/cloud-tts/scripts")
 SECRETS_ENV = os.path.expanduser("~/.workbuddy/secrets/dashscope.env")
+# ★2026-10-29：逐句合成的并发数。9 句串行约 45s，3 并发约 15s；
+#   再高容易撞百炼的并发限流，别再往上调。
+SPLIT_JOBS = 3
 PUNCT = re.compile("[，。！？、：；—…·～「」『』《》”“‘’（）()\\s]")
 # ★2026-10-09 灿爹拍板：文案含定场句「今天我们讲，X」时，这句及它之前的所有内容
 # 全部归入开头轮播（轮播切点 = 定场句尾 + 0.40）；没有定场句才默认只盖第一句。
@@ -337,18 +340,26 @@ def cloud_must_check(words_json, must_words):
         print(f"  必读词校验 ✓ {len(must_words)} 项（云端逐字稿实测）", flush=True)
 
 
-def tts_cloud(S, phrases, must_words, rate=None):
-    """★云端 CosyVoice：**整段合成 + 逐字时间戳**，一次替掉 f5_batch + mk_tokens_f5。
+def tts_cloud(S, phrases, must_words, rate=None, mode="split"):
+    """★云端 CosyVoice：两种合成方式，默认 **split（逐句合成 + 拼接）**。
 
     产物与本地路线**同名同格式**，下游（build_ad_video / make_fx_spec / banner 切点）
     零改动：audio/vo.wav + audio/durations.json（+ vo_mapped_v2.json / shot_bounds.json）。
     云端多给 vo.mp3 / vo.words.json / vo_cloud.srt（可读字幕，便于肉眼核）。
 
+    ★★2026-10-29 第三次返工后改默认值：mono → split ★★
+      整段合成（mono）在**文本中间**的句号处只给 25ms 碎片气口，事后只能在字上硬切
+      补停顿 → 听感「每句最后一两个字被掐断、卡一下」（灿爹连报两次）。
+      逐句合成（split）时每句末尾是模型**自己的收尾**，自带 380~510ms 停顿，
+      句间停顿靠裁首尾真静音 + 拼接得到，零切口。实测三条：入口单帧跌落 5~25dB
+      （mono 曾出现 50dB 悬崖），逐字对齐相似度 0.989 照旧达标。
+      要回到老行为：config `tts.mode: "mono"` 或 CLI `--tts-mode mono`。
+
     ★三条硬约束（踩过，别改）：
-      ① 合成文本 = phrases 原样拼接（`"".join`），**不换行、不加停顿标记**：
-         换行在云端是段落语义、`<#x#>` 是 MiniMax 的语法（CosyVoice 不认）；
-         而且必须与 phrases.txt 逐字一致，否则 mk_tokens_cloud 的规范化对齐会崩。
-      ② 整段生成才治「逐句拼接 = 每句重新起头」的 AI 感（本方案的主要听感收益）。
+      ① 合成文本必须与 phrases.txt 逐字一致（split 模式是每行一次），
+         否则 mk_tokens_cloud 的规范化对齐会崩；
+         文本里**不能加空格**（实测停顿直接消失）、不能重复标点（会把「。」变「…」）。
+      ② SSML 不可用：服务端直接回 `SSML text is not supported at the moment!`
       ③ rate 用 1.1（云端基准快，本地 1.2 是 F5 的补偿值，不能沿用）。
     """
     ws = f"{CLOUD_SCRIPTS}/cloud_cosyvoice_ws.py"
@@ -358,15 +369,26 @@ def tts_cloud(S, phrases, must_words, rate=None):
             raise RuntimeError(f"缺云端脚本 {p}（装 cloud-tts 技能，或用 --tts-engine local）")
     load_dashscope_env()
 
-    src = f"{S}/audio/text_tts_src.txt"
-    with open(src, "w", encoding="utf-8") as fh:
-        fh.write("".join(phrases))
     t0 = time.time()
-    cmd = [PY, ws, "--text-file", src, "--out", f"{S}/audio/vo"]
-    if rate:
-        cmd += ["--rate", str(rate)]
-    sh(cmd)
-    print(f"  云端合成 {time.time() - t0:.0f}s", flush=True)
+    if mode == "split":
+        split = os.path.join(SKILL, "scripts", "tts_split_cloud.py")
+        if not os.path.exists(split):
+            raise RuntimeError(f"缺逐句合成脚本 {split}")
+        cmd = [PY, split, "--phrases", f"{S}/phrases.txt",
+               "--out", f"{S}/audio/vo", "--jobs", str(SPLIT_JOBS)]
+        if rate:
+            cmd += ["--rate", str(rate)]
+        sh(cmd)
+        print(f"  云端逐句合成 {time.time() - t0:.0f}s（{len(phrases)} 句）", flush=True)
+    else:
+        src = f"{S}/audio/text_tts_src.txt"
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("".join(phrases))
+        cmd = [PY, ws, "--text-file", src, "--out", f"{S}/audio/vo"]
+        if rate:
+            cmd += ["--rate", str(rate)]
+        sh(cmd)
+        print(f"  云端整段合成 {time.time() - t0:.0f}s", flush=True)
 
     # ★对齐闸：相似度 < 0.98 或出现未映射字符 → 非零退出 ⇒ 不许拿它出片
     r = subprocess.run([PY, mk, "--words", f"{S}/audio/vo.words.json",
@@ -418,6 +440,11 @@ def main():
     ap.add_argument("--tts-only", action="store_true",
                     help="★先配音后渲画面（2026-10-11 灿爹）：只跑切镜+配音即退出，"
                          "供脉络图确认期间先出音；确认后加 --skip-tts 续跑渲画面")
+    ap.add_argument("--tts-mode", choices=("split", "mono"), default=None,
+                    help="★2026-10-29：云端合成方式。split=逐句合成+拼接（默认，"
+                         "每句末尾是模型自己的收尾、句间自带 ~370ms，不切音频）；"
+                         "mono=整段合成（老行为，句号处只 25ms 气口，需事后 vo_repause 切，"
+                         "会切出「最后一两个字卡」）。config 里 tts.mode 亦可")
     ap.add_argument("--shot-map", help="分镜语义映射 JSON：数组长度=镜数-1（镜2..镜N），"
                     "元素=素材相对路径（图）或 {src, kind:'imgvid', motion}（视频镜）；不给则均匀采样")
     a = ap.parse_args()
@@ -479,20 +506,26 @@ def main():
         print(f"  (语义映射 {len(mapping)} 镜，其中视频镜 "
               f"{sum(1 for m in mapping if m['kind']=='imgvid')} 个)", flush=True)
     else:
+        # ★2026-10-28 根治（灿爹「开头和进第一句用了同一张图」「视频里混进别的产品图」）：
+        #   旧代码在这里按比例抽稀 idx=round(k*(len(shots)-1)/(n-2))。
+        #   只要 len(shots)==n（最常见写法），抽稀必然 round 出重复索引、跳过中间某张
+        #   ⇒ 成片镜1与镜2共用一张图、被跳过那张之后整体错位一格，且全程不报错。
+        #   现在改成：长度合法就**按顺序逐张取**，长度不合法直接报错，不许偷偷抽稀。
+        #     len(shots)==n   → 镜1 有专用位（mapping[0] 归钩子镜，mapping[1:] 归镜2..n）
+        #     len(shots)==n-1 → 镜1/镜2 共用 mapping[0]（旧行为）
         if n - 1 > len(shots):
-            raise RuntimeError(f"内容镜 {n-1} > 素材 {len(shots)}")
-        # ★2026-10-26：没传 --shot-map 时退回 config.shots，条数与镜数对不上就会
-        #   **整体错位一格**（成片镜 2 播镜 1 的图、中间某镜素材被吞），且全程无报错。
+            raise RuntimeError(
+                f"素材 {len(shots)} 张 < 内容镜 {n-1}：少 {n-1-len(shots)} 张。"
+                f"不许靠自动抽稀凑，请补图或在 copy.split.json 里合并句子。")
         if len(shots) not in (n - 1, n):
-            print(f"  ⚠️ 未传 --shot-map：config.shots {len(shots)} 项 / {n} 镜"
-                  f"（应为 {n-1} 或 {n}）→ 逐镜素材会错位，请补 --shot-map", flush=True)
-        idx = [round(k * (len(shots) - 1) / max(1, (n - 2))) for k in range(n - 1)] if n > 1 else []
+            raise RuntimeError(
+                f"素材 {len(shots)} 张 / 镜数 {n}：只接受 {n-1}（镜1镜2共用首图）"
+                f"或 {n}（镜1 专用位）。当前多 {len(shots)-n} 张，会造成逐镜错位，请删多余素材。")
         # ★2026-10-21：catg 的 shots 允许写绝对路径（素材盘直接给全路径时常见），
         #   原来无条件 f"{W}/{shots[i]}" 会拼成 "W//Users/..." 这种坏路径 → 镜 1 找不到图。
-        mapping = [{"src": (shots[min(len(shots) - 1, i)]
-                            if str(shots[min(len(shots) - 1, i)]).startswith("/")
-                            else f"{W}/{shots[min(len(shots) - 1, i)]}"),
-                    "shot": "mid", "kind": "img", "motion": ""} for i in idx]
+        take = n if len(shots) == n else n - 1
+        mapping = [{"src": (shots[i] if str(shots[i]).startswith("/") else f"{W}/{shots[i]}"),
+                    "shot": "mid", "kind": "img", "motion": ""} for i in range(take)]
     motion_t = C.get("motions", {})
     motions = [m["motion"] or motion_t.get(m["src"].split("/")[-1][:4], "zoom_in")
                for m in mapping]
@@ -547,9 +580,33 @@ def main():
             # 与 phrases.txt 字数不一致，对齐闸必挂。读法不对时改文案或听样定夺。
             print(f"  ⚠️ 云端路线不套本地 poly_map({len(poly_map)}) / "
                   f"norm_map({len(C.get('norm_map', {}))})：请对 vo.wav 人工听读音", flush=True)
-        tts_cloud(S, phrases, _must, rate=_rate)
+        # ★2026-10-29：默认 split（逐句合成）——句间停顿由模型自己的句末收尾 +
+        #   裁首尾真静音拼接得到，不靠事后切音频，所以「最后一两个字卡」从根上没了。
+        _tts_mode = a.tts_mode or (C.get("tts") or {}).get("mode") or "split"
+        tts_cloud(S, phrases, _must, rate=_rate, mode=_tts_mode)
     else:
+        _tts_mode = "local"
         tts_local_f5(S, phrases, _must, poly_map, C)
+
+    # ── ★2026-10-29 灿爹返工：标点停顿修补（**仅 mono 整段合成需要**）──
+    #   整段合成时每个标点只给 72~73ms，句号也常常不足，
+    #   「今天我们讲，米糊。」后面几乎不断句，听成「米糊外胚」。
+    #   此步在成品配音上插静音并同步平移全部时间轴：0 积分、确定性、幂等
+    #   （已补过自动跳过；配音重新合成过则自动重建快照）。
+    #   ★split 模式天然带 370ms 句间停顿，**绝不能再跑本步**——那是同一处
+    #     再切一遍，会把刚做好的自然收尾又切成硬切（2026-10-29 血证）。
+    #   config 里 vo_pause:false 关闭；vo_pause_sent / vo_pause_comma 改目标值。
+    if _tts_mode == "mono" and C.get("vo_pause") is not False:
+        _vp = [PY, f"{SKILL}/scripts/vo_repause.py", "--proj", S]
+        for _k, _flag in (("vo_pause_sent", "--sent"), ("vo_pause_comma", "--comma")):
+            if C.get(_k) is not None:
+                _vp += [_flag, str(C[_k])]
+        _r = subprocess.run(_vp, capture_output=True, text=True)
+        for _l in (_r.stdout or "").strip().splitlines()[-3:]:
+            print("  " + _l, flush=True)
+        if _r.returncode != 0:
+            print("  ⚠️ 停顿修补未生效：", (_r.stderr or "").strip()[:200], flush=True)
+
     durs = json.load(open(f"{S}/audio/durations.json", encoding="utf-8"))["sentences"]
     # ★拆镜后 n 是画面镜数（可能 > 语音句数）：配音只跟语音句对齐，这里必须比 n_voice
     assert len(durs) == n_voice, f"配音句数 {len(durs)} ≠ 语音句数 {n_voice}"
@@ -935,7 +992,8 @@ def main():
                 # ★2026-10-15 修：Explain.tsx 此前漏同步 → fx_comp_j 引入 './Explain' 报
                 #   "Module not found: Can't resolve './Explain'" 整段 fx 渲染崩（烟酰胺v1实测）。
                 #   同步列表必须覆盖 fx_comp_j 的全部同目录依赖：KwOverlay / DataViz / Explain。
-                for _f in ("KwOverlay.tsx", "DataViz.tsx", "Explain.tsx", "fx_comp_j.tsx"):
+                for _f in ("KwOverlay.tsx", "DataViz.tsx", "Explain.tsx",
+                           "ProductCardFx.tsx", "fx_comp_j.tsx"):
                     _dst = f"{W}/rem3d/src/{_f}"
                     _new = open(f"{_libsrc}/{_f}", encoding="utf-8").read()
                     if not os.path.exists(_dst) or open(_dst, encoding="utf-8").read() != _new:
@@ -1003,7 +1061,8 @@ registerRoot(() => (
     )}}
     <Composition id="FxLayer{a.name.capitalize()}" component={{FxLayerJ}}
       durationInFrames={{spec.totalFrames}} fps={{FPS}} width={{1920}} height={{1080}}
-      defaultProps={{{{kw: frontKw, viz: spec.viz}}}} />
+      defaultProps={{{{kw: frontKw, viz: spec.viz,
+                        cards: ((spec as any).cards || [])}}}} />
   </>
 ));
 """
@@ -1204,7 +1263,11 @@ registerRoot(() => (
     #   ★带轮播的片子必须在这一步补：封面贴在底片头 0.1s，会被卷播整段
     #     替换吃掉（2026-10-09 v1-v3 三条封面丢失根因）。1 帧 0.034s@30fps，
     #     只占首帧供平台抓封面，不铺任何声音，音频原样 copy。
-    _cover = f"{SKILL}/assets/cover/cover_frame_1080p.jpg"
+    # ★2026-10-28：封面帧原来**硬编码全局那张（小男孩 IP）**，小绿人片首帧会冒出
+    #   一个不相干的人物（实测抽帧 0-0.13s 全是那个男孩）。改成 config.cover_frame
+    #   可指定本片封面；不写才回落全局默认，老片行为不变。
+    _cover = (C.get("cover_frame")
+              or f"{SKILL}/assets/cover/cover_frame_1080p.jpg")
     # ★2026-10-15 交付规格定式（灿爹报「200多兆，手机上转很久都预览不出来」）：
     #   【根因 ①码率】全链路原用 `h264_videotoolbox -q:v 75`，1080p 实测 **35~39 Mbps**
     #     （53s ⇒ 235~250MB），远高于投放所需（手机/短视频平台 4~6 Mbps 足够清晰）。

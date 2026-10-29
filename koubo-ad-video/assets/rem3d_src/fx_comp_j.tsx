@@ -3,6 +3,7 @@ import {AbsoluteFill} from 'remotion';
 import {KwOverlay, KwSpec} from './KwOverlay';
 import {VizOverlay, VizSpec} from './DataViz';
 import {ExplainOverlay, ExplainSpec} from './Explain';
+import {ProductCardFx} from './ProductCardFx';
 
 /**
  * 流水线 · Remotion fx 附加层（通用版）
@@ -29,14 +30,41 @@ import {ExplainOverlay, ExplainSpec} from './Explain';
  *   动效层只说关键词、不重复字幕完整句；补充说明类内容一律不上画面。
  * 科普段落位另见 references/科普句式动效库.md 的边缘密度实测表。
  */
+/** 产品详情卡（spec.cards 元素）：src 是 public/ 下的相对路径 */
+export type CardSpec = {
+  src: string;
+  x: number;
+  y: number;
+  w: number;
+  startSec: number;
+  durSec: number;
+  from?: 'right' | 'left' | 'bottom';
+};
+
 export const FxLayerJ: React.FC<{
   kw: KwSpec[];
   viz: VizSpec[];
   explain?: ExplainSpec[];
-}> = ({kw, viz, explain = []}) => (
+  cards?: CardSpec[];
+}> = ({kw, viz, explain = [], cards = []}) => (
   <AbsoluteFill style={{background: 'transparent'}}>
     <VizOverlay list={viz} />
     <ExplainOverlay list={explain} />
     <KwOverlay list={kw} />
+    {/* ★2026-10-28 产品详情卡（弹簧入场）：压在字上面一层，
+        保证卡片内容永远完整可读（灿爹 #225「卡片要看得清」）。
+        时机与落位由 decl 显式给，不做自动求解 —— 宁可人工量再画框验收。 */}
+    {cards.map((c, i) => (
+      <ProductCardFx
+        key={`card-${i}`}
+        src={c.src}
+        w={c.w}
+        left={c.x}
+        top={c.y}
+        startSec={c.startSec}
+        durSec={c.durSec}
+        from={c.from || 'left'}
+      />
+    ))}
   </AbsoluteFill>
 );

@@ -1226,12 +1226,88 @@ def main():
     #            推 = overlay 位移，零时长变化、不截断流（见下方实现注释）。
     #   flash —— 只打亮度脉冲（早期版本，弱闪几乎看不出来，已降级为兜底）。
     #   xfade —— 重叠式推镜，**会把视频流静默截断**（见坑表 ⑨），仅留作对照。
+    # ★2026-10-28 新增 fx 模式（灿爹：「把转场和淡入淡出这些效果全部加到姜黄素里」）。
+    #   mix 的 overlay 位移只能做「整幅滑入」，观感永远是左移/右移。fx 改用 ffmpeg
+    #   **xfade** 做真正的叠画转场（57 种现成效果），并解决当年导致 xfade 被弃用的两个坑：
+    #     坑 A：链式累积截断。xfade 输出长 = offset + len(B)，而重叠段同时吃掉 A 的尾 T 秒
+    #           和 B 的头 T 秒 ⇒ 每处少 T，链到第 2~3 处 offset 就超界、画面整段消失。
+    #           解法：**B 头部 tpad 冻结 T 秒**（冻结帧正好被混合段吃掉），offset 取
+    #           「累积长 - T」。输出长 = (acc - T) + (T + L) = acc + L ⇒ 逐级严格闭合。
+    #     坑 B：实测每处还会丢 ~1 帧（取整）。解法：每级 xfade 后 tpad 兜 0.2s + trim 到
+    #           **精确帧号** + setpts 归零，acc 长度永远等于理论值，误差不累积。
+    #   总长仍严格 = Σ原镜长 ⇒ 字幕 / 口播 / 动效时间轴一行都不用改。
+    #   cuts 每项一个名字（见 FX_PRESETS）；要细调可写 dict：
+    #     {"kind":"hblur","dur":0.40}
+    #   "fadeblack"/"fadewhite" 不走 xfade 原生黑场（实测峰值只维持 2 帧、肉眼等于没有），
+    #   改成：极短 xfade(0.06) + A 尾 fade=out + B 头 fade=in ⇒ A 尾黑 + B 头黑两段相加，
+    #   得到 0.25~0.30s 真正的黑场停留。
+    FX_PRESETS = {
+        # kind: (xfade类型, 转场时长T, A尾淡出时长, B头淡入时长)；淡出时长含「保持色」部分
+        "hblur":      ("hblur",      0.34, 0.0,  0.0),   # 水平模糊溶 —— 主力
+        "fade":       ("fade",       0.40, 0.0,  0.0),   # 慢叠化
+        "circleopen": ("circleopen", 0.38, 0.0,  0.0),   # 中心炸圆
+        "radial":     ("radial",     0.36, 0.0,  0.0),   # 径向漩涡
+        "vertopen":   ("vertopen",   0.34, 0.0,  0.0),   # 垂直开合
+        "pixelize":   ("pixelize",   0.36, 0.0,  0.0),   # 像素化
+        "hlslice":    ("hlslice",    0.34, 0.0,  0.0),   # 横向切片
+        "wipeleft":   ("wipeleft",   0.36, 0.0,  0.0),   # 整幅擦除
+        "diagtl":     ("diagtl",     0.36, 0.0,  0.0),   # 斜切
+        "hlwind":     ("hlwind",     0.34, 0.0,  0.0),   # 风扫
+        "fadegrays":  ("fadegrays",  0.44, 0.0,  0.0),   # 去色过渡
+        "dissolve":   ("dissolve",   0.40, 0.0,  0.0),   # 颗粒溶解
+        "smoothleft": ("smoothleft", 0.34, 0.0,  0.0),   # 平滑左移（保底）
+        "fadeblack":  ("fade",       0.06, 0.22, 0.22),  # 黑场（真停留 ~0.23s）
+        "fadewhite":  ("fade",       0.06, 0.22, 0.22),  # 白场
+        # —— 淡出族 F5~F7（2026-10-28 补）：A 侧先做变换，再化到 B ——
+        "zoomout":    ("fade",       0.42, 0.0,  0.0),   # 缩小淡出（推远收掉）
+        "blurdissolve": ("fade",     0.40, 0.0,  0.0),   # 模糊溶解（最柔）
+        "driftup":    ("fade",       0.42, 0.0,  0.0),   # 上飘淡出（老电影换卷）
+        "cut":        (None,         0.0,  0.0,  0.0),   # 硬件
+    }
+    # 淡出族里「A 侧要动」的三种，模板见下方 _pre_a 注入处（2026-10-28）。
+    # 它们不改 xfade 时长，只在 A 尾做变换 ⇒ 与黑/白场互斥（黑场要求 A 尾静止）。
+    FX_A_PRE = {"zoomout", "blurdissolve", "driftup"}
+
     XF_MODE = str(_xf.get("mode") or "mix")
+    XF_T_DEFAULT = float(_xf.get("dur", 0.34) or 0.34)
+
+    def fx_preset(kind):
+        """返回 (xfade类型, T, A尾淡出, B头淡入)；未知名字退化成原样当 xfade 类型用。"""
+        if kind in FX_PRESETS:
+            return FX_PRESETS[kind]
+        return (kind, XF_T_DEFAULT, 0.0, 0.0)
+
     # 每个切点的手法（1 基切点顺序：cuts[0] = 镜1→镜2）。缺省按 flash 处理。
     XF_CUTS = [str(c) for c in (_xf.get("cuts") or [])]
+    # fx 模式的逐切点解析（支持 str / dict 两种写法）
+    FX_KIND, FX_SPEC = [], []
+    if XF_MODE == "fx":
+        for _i in range(max(0, len(phrases) - 1)):
+            _c = (_xf.get("cuts") or [])[_i] if _i < len((_xf.get("cuts") or [])) else None
+            _c = _c if _c is not None else (_xf.get("default") or "hblur")
+            if isinstance(_c, dict):
+                _k = str(_c.get("kind") or "hblur")
+                _ty, _t, _a, _b = fx_preset(_k)
+                if _c.get("dur"):
+                    _t = float(_c["dur"])
+                FX_KIND.append(_k); FX_SPEC.append((_ty, _t, _a, _b))
+            else:
+                FX_KIND.append(str(_c)); FX_SPEC.append(fx_preset(str(_c)))
+    # ★2026-10-28 灿爹点名：「转场之间怎么每一次都有闪白啊，把眼睛闪到了，不加那个闪白」。
+    #   推镜切点原来固定 append 一记 0.40 提亮脉冲（见下方 CUT_KIND），片子里看着是"白一下"。
+    #   现在强度改由 transition.pulse 控制：默认 0.40 保持老片观感，**写 0 = 完全不打脉冲**，
+    #   推镜只留位移（换图靠画面本身推开，不靠亮度盖接缝）。flash 切点不走这个值。
+    XF_PULSE = float(_xf.get("pulse", 0.40))
+    # ★单镜淡入/淡出（淡出族 F8/F9，2026-10-28）：只作用于首镜 / 末镜，默认 0 = 关。
+    #   首镜 fade in：从黑渐显 0.55s（新段落开场、或想弱化「硬开场」时用）。
+    #   末镜 fade out：渐隐到黑 0.62s（收尾）。
+    #   与黑/白场不冲突：首镜没有前一个切点、末镜没有下一个切点，_fade_a/_fade_b 恒空。
+    FX_INTRO = float(_xf.get("intro_fade", 0) or 0)
+    FX_OUTRO = float(_xf.get("outro_fade", 0) or 0)
     if XF_T > 0:
         print(f"  镜间转场: {XF_TYPE} {XF_T:.2f}s"
-              + (f" + 白闪@{sorted(XF_FLASH)}" if XF_FLASH else ""))
+              + (f" + 白闪@{sorted(XF_FLASH)}" if XF_FLASH else "")
+              + ("" if abs(XF_PULSE - 0.40) < 1e-6 else f" | 切点提亮 {XF_PULSE:.2f}"))
     motions = ["zoom_in", "pan_r", "zoom_out", "pan_l"]
     img_idx = prod_idx = 0
     # prod/imgvid 镜声明 own_audio 时登记的「自带音轨」清单，音频段据此替换全局 vo
@@ -1517,10 +1593,73 @@ def main():
         #   （实测 tpad start 的克隆帧几乎不耗 CPU，21s 片总共多跑约 1500 帧。）
         if XF_MODE == "mix" and XF_T > 0 and i > 0:
             _xpad = f"tpad=start_mode=clone:start_duration={timeline[i - 1]['cut_end']:.3f}"
+        # ★fx 模式喂料（2026-10-28）：
+        #   B 侧 —— 头部冻结 T 秒。xfade 的重叠段会同时吃掉 A 的尾 T 秒和 B 的头 T 秒，
+        #           补回 B 的头 T 秒 ⇒ 重叠段里 B 显示的是「冻结首帧」，视觉上等于 B 还没开始动，
+        #           而总长正好不缩水。冻结帧本身不可见（混合期它刚露头就被 B 的真内容接力）。
+        #   A 侧 —— 黑/白场的淡出：先把画面渐隐到纯色，末段保持纯色（fade 完成后自动保持），
+        #           与 B 头部的「先纯色后渐显」相加 ⇒ 中间有 0.25~0.30s 真正停住的色场。
+        #           （xffade 原生的 fadeblack 峰值只维持 2 帧，肉眼等于没有，故不用。）
+        _fade_a = ""
+        _fade_b = ""
+        _pre_a = ""
+        _solo = ""
+        _start_pad = 0.0
+        if XF_MODE == "fx" and len(FX_SPEC) > 0:
+            if i > 0:
+                _k = FX_KIND[i - 1] if i - 1 < len(FX_KIND) else "hblur"
+                _ty, _T, _fa, _fb = FX_SPEC[i - 1]
+                _T = max(float(_T), 1.0 / FPS)
+                _start_pad = _T
+                _xpad = f"tpad=start_mode=clone:start_duration={_T:.4f}"
+                if _fb > 0:
+                    _hold = _fb * 0.53
+                    _gd = _fb - _hold
+                    _col = "white" if _k == "fadewhite" else "black"
+                    _fade_b = f",fade=t=in:st={_hold:.3f}:d={_gd:.3f}:color={_col}"
+            if i < len(phrases) - 1 and i < len(FX_SPEC):
+                _k = FX_KIND[i]
+                _ty, _T, _fa, _fb = FX_SPEC[i]
+                _T = max(float(_T), 1.0 / FPS)
+                _end = _start_pad + dur          # 本镜在链上的时间终点
+                if _fa > 0:
+                    _hold = _fa * 0.53
+                    _gd = _fa - _hold
+                    _col = "white" if _k == "fadewhite" else "black"
+                    _st = max(0.0, _start_pad + dur - _fa)
+                    _fade_a = f",fade=t=out:st={_st:.3f}:d={_gd:.3f}:color={_col}"
+                # ★淡出族 F5~F7：A 侧先变形，xfade 再化到 B（2026-10-28 从 demo 移植）
+                #   zoomout      —— A 缩到 0.74、四周露黑底，像镜头被推远收掉
+                #   blurdissolve —— A 在转场窗口内整幅糊掉，最看不见接缝
+                #   driftup      —— A 整幅向上飘走、底部露黑，老电影换卷感
+                #   三者都只动 A，不改 xfade 时长 ⇒ 总长与字幕轴不受影响。
+                if _k == "zoomout":
+                    _f0 = max(0, int(round((_end - _T) * FPS)))
+                    _fn = max(1, int(round(_T * FPS)))
+                    _pre_a = (f",scale=2880:-2,crop=2880:1620:0:0,"
+                              f"zoompan=z='if(lt(on,{_f0}),1,"
+                              f"max(0.74,1-0.26*(on-{_f0})/{_fn}))':"
+                              f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
+                              f"d=1:s=1920x1080:fps={FPS}")
+                elif _k == "blurdissolve":
+                    _pre_a = (f",gblur=sigma=16:"
+                              f"enable='between(t,{max(0.0, _end - _T - 0.06):.3f},{_end:.3f})'")
+                elif _k == "driftup":
+                    # ⚠️ crop 的 y 表达式默认逐帧求值，**不能写 :eval=frame**
+                    #    ffmpeg 9.0 的 crop 没有 eval 选项，写了直接 `Option not found` + exit 8。
+                    _pre_a = (f",pad=1920:1250:0:0:black,"
+                              f"crop=1920:1080:0:"
+                              f"'min(170,170*max(0,(t-{max(0.0, _end - _T):.3f})/{_T:.3f}))'")
+            # 单镜淡入/淡出**不在这里做**（2026-10-28 实测教训）：
+            #   镜链上的 fade 排在字幕层之前，画面黑下去了、字幕带和卡片还浮在上面
+            #   （末镜渐隐时能看到「画面全黑 + 更优惠红字 + 字幕底框」）。
+            #   已改为在 [vsub]（字幕合成之后）做全局 fade，见下面 vout 链。
+            #   此处 _solo 恒空，保留占位是为了不动下面的链拼接。
+        _vfq = f",fps={FPS},settb=AVTB" if XF_MODE == "fx" else ""
         if ovs:
-            fc.append(f"[{cur}]{_xpad}[v{i}]")
+            fc.append(f"[{cur}]{_xpad}{_fade_b}{_pre_a}{_fade_a}{_solo}{_vfq}[v{i}]")
         else:
-            fc.append(f"[vb{i}]{_xpad}[v{i}]")
+            fc.append(f"[vb{i}]{_xpad}{_fade_b}{_pre_a}{_fade_a}{_solo}{_vfq}[v{i}]")
 
     nseg = len(phrases)
     # ---------- 3.5 划开撕裂开场 (可选): 黑场白线划过 -> 上下两半撕开露镜1 ----------
@@ -1580,7 +1719,7 @@ def main():
                        "down": ("0", f"-H*{_p}")}[_axis]
                 fc.append(f"[{_acc}][{_labs[k]}]overlay=x='{_xy[0]}':y='{_xy[1]}':"
                           f"eval=frame:enable='gte(t,{_cum - XF_T:.3f})'[mx{k}]")
-                CUT_KIND.append((_cum, 0.40, XF_T * 0.30, _kind))
+                CUT_KIND.append((_cum, XF_PULSE, XF_T * 0.30, _kind))
             else:
                 # ⚠️ 白闪切：就位时刻**必须比 tpad 起点早 0.1s**。实测 enable 正好等于
                 #    tpad 起点（如 tpad=2.000 / enable=gte(t,2.000)）时这一路**静默失效**，
@@ -1590,6 +1729,29 @@ def main():
                 CUT_KIND.append((_cum, 1.0, XF_T * 0.35, "flash"))
             _acc = f"mx{k}"
             print(f"  转场 镜{k}→{k + 1}: {_kind} @{_cum:.2f}s")
+        vcat_label = _acc
+    elif XF_MODE == "fx" and nseg > 1:
+        # ★逐级 xfade，用**累积帧号**闭合（2026-10-28）。
+        #   offset = 累积长 - T；因为 B 头部已 tpad 冻结 T 秒，输出长 = offset + (T + L) = 累积 + L。
+        #   每级再 tpad 兜 0.2s + trim 到理论帧数 ⇒ 实测「每处丢 1 帧」的取整误差被逐级吃掉，
+        #   永远不会累积到 offset 超界（旧实现就是栽在这一点上，画面跑到第 7 秒整段消失）。
+        _acc = _labs[0]
+        _accf = int(round((timeline[0]["cut_end"] - timeline[0]["start"]) * FPS))
+        for k in range(1, nseg):
+            _Lf = int(round((timeline[k]["cut_end"] - timeline[k]["start"]) * FPS))
+            _kind = FX_KIND[k - 1] if k - 1 < len(FX_KIND) else "hblur"
+            _ty, _T, _fa, _fb = (FX_SPEC[k - 1] if k - 1 < len(FX_SPEC)
+                                 else fx_preset("hblur"))
+            _T = max(float(_T), 1.0 / FPS)
+            _off = max(0.0, _accf / FPS - _T)
+            _ty = _ty or "fade"
+            fc.append(f"[{_acc}][{_labs[k]}]xfade=transition={_ty}:duration={_T:.4f}:"
+                      f"offset={_off:.4f}[xf{k}]")
+            _want = _accf + _Lf
+            fc.append(f"[xf{k}]tpad=stop_mode=clone:stop_duration=0.20,"
+                      f"trim=end_frame={_want},setpts=PTS-STARTPTS,settb=AVTB[xft{k}]")
+            _acc, _accf = f"xft{k}", _want
+            print(f"  转场 镜{k}→{k + 1}: {_kind:11s} {_T:.2f}s @{_off:6.2f}s → 累积 {_want} 帧")
         vcat_label = _acc
     elif XF_MODE == "xfade" and XF_T > 0 and nseg > 1:
         _acc, _cum = _labs[0], 0.0
@@ -1619,8 +1781,8 @@ def main():
         _fin = "fade=t=in:st=0:d=0.08,"
     else:
         _fin = "fade=t=in:st=0:d=0.2,"
-    if XF_MODE in ("xfade", "mix") and XF_T > 0:
-        # 兜底裁到 TOTAL：mix 的总长本来就等于 Σ镜长，这里只是把取整尾差吃掉
+    if XF_MODE in ("xfade", "mix", "fx") and XF_T > 0:
+        # 兜底裁到 TOTAL：mix/fx 的总长本来就等于 Σ镜长，这里只是把取整尾差吃掉
         fc.append(f"[{vcat_label}]trim=end={TOTAL:.4f},setpts=PTS-STARTPTS[vtrim]")
         vcat_label = "vtrim"
     # ★闪光切（默认转场，2026-10-21）：切点处打一记亮度脉冲（段尾强闪、段中弱闪），
@@ -1629,21 +1791,24 @@ def main():
     #   闪到顶时接近纯白，切换点被完全吃掉。
     _fl = ""
     if XF_MODE in ("flash", "mix") and XF_T > 0 and nseg > 1:
-        if CUT_KIND:
-            # mix：推镜切点只给一记轻提亮（0.40）盖住接缝，闪切点给足 1.0
-            _cuts = [(c, st, w) for c, st, w, _k in CUT_KIND]
-        else:
+        # ★2026-10-28：只保留强度 > 0 的切点。transition.pulse=0 时这里全被滤掉 ⇒
+        #   整片零亮度脉冲（推镜只剩位移），不会再有「每次转场闪一下」。
+        _cuts = [(c, st, w) for c, st, w, _k in CUT_KIND if st > 1e-3]
+        if not CUT_KIND and XF_FLASH:
             _cuts, _cum = [], 0.0
             for k in range(1, nseg):
                 _cum += timeline[k - 1]["cut_end"] - timeline[k - 1]["start"]
                 _hard = k in XF_FLASH
                 _cuts.append((_cum, 1.0 if _hard else 0.58, XF_T * (0.35 if _hard else 0.23)))
-        _expr = "+".join(f"{st}*max(0,1-abs(t-{c:.3f})/{w:.3f})" for c, st, w in _cuts)
-        _fl = (f"eq=eval=frame:brightness='min(1,{_expr})':"
-               f"saturation='1-0.85*min(1,{_expr})',")
-        print("  闪光切: " + " / ".join(
-            f"{'强' if st >= 0.9 else '弱'}@{c:.2f}s"
-            for c, st, _w in _cuts))
+        if _cuts:
+            _expr = "+".join(f"{st}*max(0,1-abs(t-{c:.3f})/{w:.3f})" for c, st, w in _cuts)
+            _fl = (f"eq=eval=frame:brightness='min(1,{_expr})':"
+                   f"saturation='1-0.85*min(1,{_expr})',")
+            print("  闪光切: " + " / ".join(
+                f"{'强' if st >= 0.9 else '弱'}@{c:.2f}s"
+                for c, st, _w in _cuts))
+        else:
+            print("  闪光切: 已关闭（transition.pulse=0，转场只推不移亮）")
     fc.append(f"[{vcat_label}]{_fin}{_fl}fade=t=out:st={TOTAL-0.45:.2f}:d=0.45{pfx},format=yuv420p[vout]")
 
     # ---------- 3.8 开场冲击包：正片最前 BS_DUR 秒叠程序化动效 ----------
@@ -2987,6 +3152,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # 用 overlay + enable 走「覆盖式」：不改变总时长、不推迟口播（1 帧~0.1s 级无感）。
     # 布局：blur=两侧用原图模糊铺满（抖音裁中间 3:4 正好是干净原图）；pad=纯黑边。
     vout = "[vsub]"
+    # ★全局收尾渐隐（淡出族 F9，2026-10-28）：必须放在 [vsub] —— 也就是**字幕烧完之后**。
+    #   放在镜链上的话，画面黑了、字幕带和重点字卡片还浮着，成片一眼假。
+    if FX_OUTRO > 0:
+        _so = max(0.0, TOTAL_ALL - FX_OUTRO)
+        fc.append(f"[vsub]fade=t=out:st={_so:.3f}:d={FX_OUTRO:.3f}[voutro]")
+        vout = "[voutro]"
+        print(f"  收尾渐隐: 最后 {FX_OUTRO:.2f}s（@{_so:.2f}s，字幕之后）")
     # 默认带封面：config 不写 cover 就用技能内置的账号固定封面图（用户 2026-09-18 拍板）。
     # "cover": false 关闭；写 {"src": "..."} 换图；其余参数（dur/fit）可覆盖。
     cov = cfg.get("cover")
@@ -3019,6 +3191,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         fc.append(f"{vout}[ckv]overlay=0:0:eof_action=pass:enable='lt(t,{cdur:.3f})'[vfinal]")
         vout = "[vfinal]"
         print(f"  封面帧: {os.path.basename(cov['src'])} 前 {cdur:.3f}s（{cfit} 布局，总时长不变）")
+
+    # ★全局开场渐显（淡出族 F8）：同样排在字幕之后，否则从黑渐显时字幕先亮着
+    if FX_INTRO > 0:
+        fc.append(f"{vout}fade=t=in:st=0:d={FX_INTRO:.3f}[vintro]")
+        vout = "[vintro]"
+        print(f"  开场渐显: 前 {FX_INTRO:.2f}s（字幕之后）")
 
     # ---------- 7. 渲染 ----------
     # AD_PREVIEW_SEC=N：预览模式，只出前 N 秒（试开场动效/音效时用，省掉整片渲染时间）。

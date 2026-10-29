@@ -172,7 +172,7 @@ def main():
 
     kw, viz = [], []
     for w in decl.get("words", []):
-        t0 = find_t0(cts, w["text"], int(w.get("phrase", 0)), sent_of)
+        t0 = find_t0(cts, w.get("anchor", w["text"]), int(w.get("phrase", 0)), sent_of)
         if t0 is None:
             print(f"  ⚠️ fx 词「{w['text']}」在配音里找不到锚点，跳过")
             continue
@@ -285,6 +285,42 @@ def main():
                 viz[-1]["rotate"] = e["rotate"]
             viz[-1]["_p"] = int(e.get("phrase", 0))
 
+    # ★2026-10-28 详情卡片层（灿爹点名「产品段，烟酰胺的详情卡片对应文案要出来」）
+    #   与 viz 的本质区别：卡片是**产品说明**，观众要读得清，所以
+    #     ① 默认 2.0s 起步（同 build_ad_video 的 card_min_sec），不按镜长截；
+    #     ② 允许骑到下一镜末（多留 0.12s 转场余量），因为产品段一句话常横跨两镜；
+    #     ③ 落位由 decl 显式给（x/y/w），不走自动求解 —— fx 层看不到人物掩膜，
+    #        宁可人工量好再画框验收（见 plan_fx_pos.py 的教训：bbox 会偏大）。
+    #   decl: "cards":[{"src":"cards/IMG_2407.jpg","phrase":12,"anchor":"配料表",
+    #                   "x":34,"y":24,"w":560,"durSec":2.05,"from":"left"}]
+    cards = []
+    for c in decl.get("cards", []):
+        if not c.get("src"):
+            continue
+        _p = int(c.get("phrase", 0))
+        if _p < 1 or _p > len(bounds):
+            print(f"  ⚠️ 卡片「{os.path.basename(c['src'])}」镜号 {_p} 越界，跳过")
+            continue
+        _t0 = bounds[_p - 1][0]
+        if c.get("anchor"):
+            _t = find_t0(cts, c["anchor"], _p, sent_of)
+            if _t is None:
+                print(f"  ⚠️ 卡片锚点「{c['anchor']}」未找到，退回镜首")
+            else:
+                _t0 = _t
+        _dur = float(c.get("durSec", 2.0))
+        _start = max(bounds[_p - 1][0], _t0 - float(c.get("lead", 0.25)))
+        _cap = (bounds[_p][1] if _p < len(bounds) else 1e9) - 0.12
+        if _start + _dur > _cap:
+            _dur = max(0.8, _cap - _start)
+            print(f"  ⏱ 卡片「{os.path.basename(c['src'])}」压到镜{_p + 1}末 → "
+                  f"{_start:.2f}+{_dur:.2f}s")
+        cards.append({"src": c["src"],
+                      "startSec": round(_start, 2), "durSec": round(_dur, 2),
+                      "x": int(c.get("x", 60)), "y": int(c.get("y", 60)),
+                      "w": int(c.get("w", 560)),
+                      "from": c.get("from", "left")})
+
     # ★统一压进本镜（不得跨镜）——见 fit_shot 里的灿爹原话
     _warn = []
     for v in viz:
@@ -297,13 +333,13 @@ def main():
         print("  ⏱ 动效已压进所属分镜（不跨镜）:")
         print("\n".join(_warn))
 
-    json.dump({"kw": kw, "viz": viz}, open(a.out, "w", encoding="utf-8"),
+    json.dump({"kw": kw, "viz": viz, "cards": cards}, open(a.out, "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
     _by = {}
     for v in viz:
         _by[v["kind"]] = _by.get(v["kind"], 0) + 1
     _s = " + ".join(f"{k}×{n}" for k, n in sorted(_by.items())) or "空"
-    print(f"  fx_spec: {len(kw)} 重点字 + viz[{_s}] → {a.out}")
+    print(f"  fx_spec: {len(kw)} 重点字 + viz[{_s}] + {len(cards)} 张详情卡 → {a.out}")
 
 
 if __name__ == "__main__":
