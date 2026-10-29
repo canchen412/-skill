@@ -2399,9 +2399,13 @@ def main():
         #   （与 #197 文档「米纸底·墨黑填充」不符，成片里字幕像贴了黑胶布）。
         #   修法：盒型把 bg 写进 OutlineColour 槽；非盒型维持原 out（细描边色）。
         _boxcol = P['bg'] if P['box'] else P['out']
+        # ★2026-10-29 字幕位置/字号参数化（米糊返工：灿爹「字体再大一点、别遮人物主体」）
+        #   sub_margin_v：字幕底边距（默认 58）；sub_sub_outline_kw：minimal 款描边默认 2
+        _marg_v = int(cfg.get('sub_margin_v', 58))
+        _min_out = int(cfg.get('sub_min_outline', P.get('outline', 2)))
         s = (f"Style: Karaoke,{cfg.get('sub_font','Heiti SC')},{cfg.get('sub_size',60)},"
              f"{P['unf']},{P['fill']},{_boxcol},{P['bg']},-1,0,0,0,100,100,0,0,"
-             f"{3 if P['box'] else 1},{P.get('pad', K_PAD) if P['box'] else P.get('outline', 2)},0,2,60,60,58,1")
+             f"{3 if P['box'] else 1},{P.get('pad', K_PAD) if P['box'] else _min_out},0,2,60,60,{_marg_v},1")
         if SUB_STYLE == "minimal":   # 底部大金句行（动画 clip 左→右扫出，层级 1）
             s += (f"\nStyle: KWBig,{cfg.get('sub_font','Heiti SC')},{int(cfg.get('sub_size', 60)) * 2},"
                   f"&H004EC1F2,&H004EC1F2,&H001A1A1A,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,2,60,60,12,1")
@@ -2525,7 +2529,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # （即便 WrapStyle 已设 0 智能换行，这里显式断句能让断点落在标点/关键词边界，更自然）
     sub_size = cfg.get("sub_size", 60)
     _ml, _mr = 60, 60  # 与 Style 的 MarginL/MarginR 保持一致
-    per_line = max(8, int((1920 - _ml - _mr) / sub_size * 0.85))
+    # ★2026-10-29 sub_per_line：字号加大时用它锁住每行字数（不改断句、不新增折行）
+    per_line = int(cfg.get("sub_per_line") or max(8, int((1920 - _ml - _mr) / sub_size * 0.85)))
     _protect = [h["kw"] for h in cfg.get("sub_highlights", [])]
     _protect += [k["kw"] for k in cfg.get("keywords", []) if "kw" in k]
     _protect = list(dict.fromkeys(_protect))  # 去重保序
@@ -2701,6 +2706,31 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         pop = (f"{{\\an5\\pos(960,{tc['y']})\\c{tc['color']}\\fs{tc['size']}\\fscx20\\fscy20{frz}"
                f"\\t(0,110,\\fscx120\\fscy120)\\t(110,260,\\fscx100\\fscy100)\\fad(120,220)}}")
         lines.append(f"Dialogue: 3,{ts(tc['t0'])},{ts(tc['end'])},Big,,0,0,0,,{pop}{tc['text']}")
+    # ★2026-10-29 底部柔化压暗带（cfg.sub_band=true 时启用）
+    #   灿爹反馈「重点字遮住人物主体」：字幕区与人物之间缺过渡，字直接压在肌肉上。
+    #   做法＝在字幕带下方叠 8 条递增 alpha 的窄矩形（伪渐变，层级 0 = 垫在字幕下面），
+    #   让字幕落在暗底上，视觉上与人物剥离开；强度 alpha_max≈27%，压得很轻，不脏画面。
+    if cfg.get("sub_band"):
+        _band_h = int(cfg.get("sub_band_h", 200))
+        _band_top = 1080 - _band_h
+        _band_max = int(cfg.get("sub_band_alpha", 70))   # 底部最深压暗量（0~254，越大越黑）
+        _steps = 12
+        _sh = max(8, _band_h // _steps)
+        for _i in range(_steps):
+            _y = _band_top + _i * _sh
+            # ⚠️ ASS alpha 语义：00=完全不透明、FF=完全透明 —— 与"越靠底越暗"方向相反。
+            #    首版写成 1-(i+0.5)/steps 直接把渐变做反：顶部最黑、底部透，
+            #    成片里表现为字幕带上方一条硬边黑胶布（2026-10-29 A 条实锤）。
+            _a = int(255 - _band_max * ((_i + 0.5) / _steps))
+            _a = max(0, min(255, _a))
+            if _a >= 253:
+                continue
+            # ⚠️ 层级必须 -1：band 是 layer 0 且写在字幕之后 ⇒ 会盖在字幕上面，
+            #    实测把白字幕压成灰色半透明（2026-10-29 米糊 A 条首渲翻车）
+            lines.append(
+                f"Dialogue: -1,0:00:00.00,9:59:59.00,Main,,0,0,0,,"
+                f"{{\\an7\\pos(0,{_y})\\p1\\bord0\\shad0\\c&H000000&\\alpha&H{_a:02X}&}}"
+                f"m 0 0 l 1920 0 l 1920 {_sh + 2} l 0 {_sh + 2}")
     ass_path = os.path.join(workdir, "subs.ass")
     open(ass_path, "w", encoding="utf-8").write(ass + "\n".join(lines) + "\n")
     # ---------- 5.5 产品详情卡片叠加：滑入+淡入 → 停留 → 滑出+淡出 ----------

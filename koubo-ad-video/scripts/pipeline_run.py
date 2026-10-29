@@ -926,6 +926,14 @@ def main():
            "sub_size": C.get("sub_size", 78), "fps": 30, "width": 1920, "height": 1080,
            **({k: C[k] for k in ("sub_primary","sub_secondary","sub_outline_colour","sub_outline","sub_shadow")
                if k in C}),
+           # ★2026-10-29 补白名单（米糊返工：「字体再大一点、别遮人物主体」）：
+           #   sub_per_line 锁每行字数（字号加大不改断句）；sub_margin_v 调字幕高度；
+           #   sub_band* 底部柔化压暗带；sub_min_outline minimal 款描边。
+           #   ⚠️不在这里透传 ⇒ 写进 brand json 也到不了 build_ad_video（重演上次漏白名单的坑）。
+           **({k: C[k] for k in ("sub_margin_v", "sub_per_line", "sub_band",
+                                 "sub_band_h", "sub_band_alpha", "sub_min_outline",
+                                 "sub_max_lines")
+               if k in C}),
             "phrases": (
                # ★卷播镜禁止 own_audio：Remotion 卷播带的是 -91dB 静音轨，
                #   会被 build_ad_video 误判为「自带混音」→ 屏蔽全局 vo 的钩子段
